@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Watermelina Mini Game</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="game-wrap">
+    <div class="nav">
+      <a class="brand" href="index.html">🍉 Watermelina</a>
+      <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="game.html">Mini Game</a>
+        <a href="links.html">Official Links</a>
+      </div>
+    </div>
+
+    <div class="game-shell">
+      <div class="scorebar">
+        <div>Score: <span id="score">0</span></div>
+        <div>Best: <span id="best">0</span></div>
+      </div>
+      <div class="small">Tap, click, or press space. Every fart plays a sound and lifts Watermelina higher.</div>
+      <div class="canvas-wrap" style="margin-top:12px">
+        <canvas id="game"></canvas>
+        <div class="overlay" id="overlay">
+          <h2 style="margin:0">Watermelina Escape</h2>
+          <div class="small">Dodge the fruit police and fly through the larger starting gaps. Touch any police fruit and you lose.</div>
+          <div id="finalScore"></div>
+          <div class="btnrow" style="justify-content:center">
+            <a class="btn blue" href="https://t.me/+Z90dB0wM1tg1MmM0" target="_blank" rel="noopener">🚀 Join Telegram</a>
+            <button class="btn green" id="startBtn" type="button">▶ Start Game</button>
+            <button class="btn pink" id="restartBtn" type="button" style="display:none">🔄 Play Again</button>
+            <button class="btn black" id="shareX" type="button">🐦 Share Score</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section card" style="margin-top:14px">
+        <h2>How it works</h2>
+        <div class="small">Watermelina is smaller so she fits more easily. The early gaps are larger. The police fruits now use rounded Watermelina-style bodies instead of triangles.</div>
+        <ol class="lb-list">
+          <li>Tap to fart and rise.</li>
+          <li>Green smoke appears on every jump.</li>
+          <li>A real local fart sound file plays on every fart.</li>
+          <li>If Watermelina touches any part of a police fruit, the run ends.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+<script src="game.js"></script>
+</body>
+</html>
