@@ -4645,8 +4645,9 @@
       const audio = {
         ctx: null,
         enabled: true,
-        _fartEl: null,
-        _fartReady: false,
+        _fartBuf: null,        // WebAudio AudioBuffer decoded from assets/fart.mp3
+        _fartBufLoading: false,
+        _fartGain: null,       // Shared GainNode for homepage fart volume
         _initCtx() {
           if (!this.ctx) {
             const AC = window.AudioContext || window.webkitAudioContext;
@@ -4654,14 +4655,23 @@
           }
         },
         _initHomepageFart() {
-          // Preload local fart mp3 once (HTMLAudio path for homepage tap ONLY)
-          if (!this._fartEl) {
-            this._fartEl = new Audio('assets/fart.mp3');
-            this._fartEl.preload = 'auto';
-            this._fartEl.volume = 0.95;
-            this._fartEl.addEventListener('canplaythrough', () => { this._fartReady = true; }, { once: true });
-            this._fartEl.load();
-          }
+          // Fetch & decode fart.mp3 into a WebAudio buffer once (no HTMLAudioElement)
+          if (this._fartBuf || this._fartBufLoading) return;
+          this._initCtx();
+          if (!this.ctx) return;
+          this._fartBufLoading = true;
+          var self = this;
+          fetch('assets/fart.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(ab) { return self.ctx.decodeAudioData(ab); })
+            .then(function(decoded) {
+              self._fartBuf = decoded;
+              // Create a persistent gain node for volume control
+              self._fartGain = self.ctx.createGain();
+              self._fartGain.gain.value = 0.95;
+              self._fartGain.connect(self.ctx.destination);
+            })
+            .catch(function() { self._fartBufLoading = false; });
         },
         init() {
           this._initCtx();
@@ -4695,12 +4705,15 @@
         blip(type) {
           if (!this.enabled) return;
           if (type === 'fart') {
-            // HTMLAudio path — used by homepage character tap ONLY
+            // WebAudio buffer path — used by homepage character tap ONLY
+            // No HTMLAudioElement, so no iPhone lock-screen media card
             this._initHomepageFart();
-            if (this._fartEl) {
-              this._fartEl.currentTime = 0;
-              this._fartEl.play().catch(() => {});
-            }
+            if (!this._fartBuf || !this.ctx || !this._fartGain) return;
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            var src = this.ctx.createBufferSource();
+            src.buffer = this._fartBuf;
+            src.connect(this._fartGain);
+            src.start(0);
             return;
           }
           this._initCtx();
