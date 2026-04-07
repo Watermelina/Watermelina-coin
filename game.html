@@ -8269,49 +8269,69 @@
       }
       window.playCoinReward = playCoinReward;
 
-      // === Lobby Background Music ===
+      // === Lobby Background Music (WebAudio) ===
       // Plays assets/lobby-music.mp3 on loop while in the homepage/lobby state.
-      // Stops during gameplay and loading. Resumes when returning to lobby.
-      var _lobbyMusic = null;
+      // Uses WebAudio API (AudioBufferSourceNode) instead of HTMLAudioElement
+      // so it behaves like game audio and never appears in lock-screen media controls.
+      var _lobbyMusicBuffer = null;   // decoded AudioBuffer (loaded once)
+      var _lobbyMusicSource = null;   // active AudioBufferSourceNode (recreated per play)
+      var _lobbyMusicGain = null;     // dedicated GainNode for music volume
+      var _lobbyMusicPlaying = false; // true while music source is actively playing
       var _lobbyMusicReady = false;
       var _lobbyMusicUnlocked = false;
       var _lobbyMusicVolume = 0.05;
+      var _lobbyMusicPausedByHide = false;
 
-      // Preload the lobby music sample
+      // Ensure the shared AudioContext exists (reuse the gameplay one)
+      function _ensureLobbyAudioCtx() {
+        if (!audio.ctx) {
+          var AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audio.ctx = new AC();
+        }
+        if (audio.ctx && !_lobbyMusicGain) {
+          _lobbyMusicGain = audio.ctx.createGain();
+          _lobbyMusicGain.gain.value = _lobbyMusicVolume;
+          _lobbyMusicGain.connect(audio.ctx.destination);
+        }
+        return audio.ctx;
+      }
+
+      // Fetch and decode lobby music into an AudioBuffer (once)
       (function _preloadLobbyMusic() {
-        try {
-          var a = new Audio();
-          a.preload = 'auto';
-          a.loop = true;
-          a.volume = _lobbyMusicVolume;
-          a.addEventListener('canplaythrough', function() { _lobbyMusicReady = true; }, { once: true });
-          a.addEventListener('error', function() { _lobbyMusicReady = false; });
-          a.src = 'assets/lobby-music.mp3';
-          _lobbyMusic = a;
-        } catch(e) { /* ignore */ }
+        fetch('assets/lobby-music.mp3')
+          .then(function(resp) { return resp.arrayBuffer(); })
+          .then(function(arrayBuf) {
+            var ctx = _ensureLobbyAudioCtx();
+            if (!ctx) return;
+            return ctx.decodeAudioData(arrayBuf);
+          })
+          .then(function(decoded) {
+            if (decoded) {
+              _lobbyMusicBuffer = decoded;
+              _lobbyMusicReady = true;
+            }
+          })
+          .catch(function() { _lobbyMusicReady = false; });
       })();
 
-      // Unlock lobby music on first user interaction (Telegram/Safari autoplay policy).
-      // Also attempt immediate autoplay after load — if blocked, fall back to interaction unlock.
-      var _lobbyMusicPendingAutoplay = false;
+      // Unlock WebAudio context on first user interaction (Telegram/Safari autoplay policy)
       (function _unlockLobbyMusic() {
         function unlock() {
           if (_lobbyMusicUnlocked) return;
-          _lobbyMusicUnlocked = true;
-          if (_lobbyMusic) {
-            var origVol = _lobbyMusic.volume;
-            _lobbyMusic.volume = 0;
-            _lobbyMusic.play().then(function() {
-              _lobbyMusic.pause();
-              _lobbyMusic.currentTime = 0;
-              _lobbyMusic.volume = origVol;
-              // If lobby is already visible, start playing now
+          var ctx = _ensureLobbyAudioCtx();
+          if (!ctx) return;
+          if (ctx.state === 'suspended') {
+            ctx.resume().then(function() {
+              _lobbyMusicUnlocked = true;
               if (document.body.classList.contains('app-revealed') && !document.body.classList.contains('play-mode')) {
                 _startLobbyMusic();
               }
-            }).catch(function() {
-              _lobbyMusicUnlocked = false; // retry on next interaction
-            });
+            }).catch(function() {});
+          } else {
+            _lobbyMusicUnlocked = true;
+            if (document.body.classList.contains('app-revealed') && !document.body.classList.contains('play-mode')) {
+              _startLobbyMusic();
+            }
           }
           document.removeEventListener('touchstart', unlock, true);
           document.removeEventListener('click', unlock, true);
@@ -8319,29 +8339,19 @@
         document.addEventListener('touchstart', unlock, true);
         document.addEventListener('click', unlock, true);
 
-        // Attempt immediate autoplay once the page is interactive
+        // Attempt immediate context resume after page load
         function tryAutoplay() {
           if (_lobbyMusicUnlocked) return;
-          if (!_lobbyMusic || !_lobbyMusicReady) {
-            _lobbyMusicPendingAutoplay = true;
-            return;
-          }
+          var ctx = _ensureLobbyAudioCtx();
+          if (!ctx) return;
+          if (ctx.state === 'suspended') return; // need interaction
           _lobbyMusicUnlocked = true;
-          _lobbyMusic.play().then(function() {
-            // Autoplay succeeded — music is now unlocked and playing
-            if (!document.body.classList.contains('app-revealed') || document.body.classList.contains('play-mode') || !state.soundEnabled) {
-              _lobbyMusic.pause();
-              _lobbyMusic.currentTime = 0;
-            }
-            document.removeEventListener('touchstart', unlock, true);
-            document.removeEventListener('click', unlock, true);
-          }).catch(function() {
-            // Autoplay blocked — rely on interaction-based unlock
-            _lobbyMusicUnlocked = false;
-            _lobbyMusicPendingAutoplay = true;
-          });
+          if (document.body.classList.contains('app-revealed') &&
+              !document.body.classList.contains('play-mode') &&
+              state.soundEnabled) {
+            _startLobbyMusic();
+          }
         }
-        // Try autoplay after a short delay to let the page settle
         if (document.readyState === 'complete') {
           setTimeout(tryAutoplay, 300);
         } else {
@@ -8350,54 +8360,49 @@
       })();
 
       function _startLobbyMusic() {
-        if (!_lobbyMusic || !_lobbyMusicReady || !_lobbyMusicUnlocked) return;
-        // Respect global sound toggle
+        if (!_lobbyMusicReady || !_lobbyMusicBuffer || !_lobbyMusicUnlocked) return;
         if (!state.soundEnabled) return;
-        // Prevent restarting if already playing
-        if (!_lobbyMusic.paused) return;
+        if (_lobbyMusicPlaying) return; // prevent duplicates
+        var ctx = _ensureLobbyAudioCtx();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(function() {});
+        }
         try {
-          _lobbyMusic.play().catch(function() {});
+          // Stop any lingering source before creating a new one
+          if (_lobbyMusicSource) {
+            try { _lobbyMusicSource.stop(); } catch(e) {}
+            _lobbyMusicSource = null;
+          }
+          var src = ctx.createBufferSource();
+          src.buffer = _lobbyMusicBuffer;
+          src.loop = true;
+          src.connect(_lobbyMusicGain);
+          src.onended = function() {
+            if (_lobbyMusicSource === src) {
+              _lobbyMusicSource = null;
+              _lobbyMusicPlaying = false;
+            }
+          };
+          src.start(0);
+          _lobbyMusicSource = src;
+          _lobbyMusicPlaying = true;
         } catch(e) { /* ignore */ }
       }
 
       function _stopLobbyMusic() {
-        if (!_lobbyMusic) return;
-        if (_lobbyMusic.paused) return;
+        if (!_lobbyMusicPlaying || !_lobbyMusicSource) return;
         try {
-          _lobbyMusic.pause();
+          _lobbyMusicSource.stop();
         } catch(e) { /* ignore */ }
+        _lobbyMusicSource = null;
+        _lobbyMusicPlaying = false;
       }
 
-      // --- Lobby music: aggressive stop on background / clean resume on foreground ---
-      // On hide/background/lock: pause, reset time, unload audio source, and
-      // fully clear media-session so iOS removes the app from lock-screen controls.
-      // On resume: rebind audio source and restart if appropriate.
-      var _lobbyMusicPausedByHide = false;
-      var _lobbyMusicSrc = 'assets/lobby-music.mp3';
-
+      // --- Lobby music: stop on background / resume on foreground ---
       function _onAppHidden() {
-        if (!_lobbyMusic) return;
-        var wasPlaying = !_lobbyMusic.paused;
-        // 1. Immediate pause + reset position
-        try { _lobbyMusic.pause(); } catch(e) {}
-        try { _lobbyMusic.currentTime = 0; } catch(e) {}
-        // 2. Unload audio source so iOS drops it as an active media item
-        try {
-          _lobbyMusic.removeAttribute('src');
-          _lobbyMusic.load(); // forces iOS to release the media resource
-        } catch(e) {}
-        // 3. Fully clear media-session metadata, playback state, and action handlers
-        if (navigator.mediaSession) {
-          try {
-            navigator.mediaSession.metadata = null;
-            navigator.mediaSession.playbackState = 'none';
-            var actions = ['play','pause','stop','seekbackward','seekforward',
-                           'seekto','previoustrack','nexttrack'];
-            for (var i = 0; i < actions.length; i++) {
-              try { navigator.mediaSession.setActionHandler(actions[i], null); } catch(e2) {}
-            }
-          } catch(e) {}
-        }
+        var wasPlaying = _lobbyMusicPlaying;
+        _stopLobbyMusic();
         if (wasPlaying) {
           _lobbyMusicPausedByHide = true;
         }
@@ -8406,31 +8411,14 @@
       function _onAppVisible() {
         if (!_lobbyMusicPausedByHide) return;
         _lobbyMusicPausedByHide = false;
-        // Rebind the audio source that was unloaded on hide
-        if (_lobbyMusic) {
-          try {
-            // After removeAttribute('src') + load(), .src becomes '' or the page URL
-            if (!_lobbyMusic.getAttribute('src')) {
-              _lobbyMusic.src = _lobbyMusicSrc;
-              _lobbyMusic.load();
-              _lobbyMusicReady = false;
-              _lobbyMusic.addEventListener('canplaythrough', function() {
-                _lobbyMusicReady = true;
-                // Auto-start once reloaded if conditions still hold
-                if (_lobbyMusic && !_lobbyMusic.paused) return; // already playing
-                if (document.body.classList.contains('app-revealed') &&
-                    !document.body.classList.contains('play-mode') &&
-                    state.soundEnabled && !document.hidden) {
-                  _startLobbyMusic();
-                }
-              }, { once: true });
-            }
-          } catch(e) {}
+        // Resume the AudioContext if it was suspended
+        if (audio.ctx && audio.ctx.state === 'suspended') {
+          audio.ctx.resume().catch(function() {});
         }
         // Only resume if in lobby, sound is on, and not in gameplay
         if (document.body.classList.contains('app-revealed') &&
             !document.body.classList.contains('play-mode') &&
-            state.soundEnabled) {
+            state.soundEnabled && !document.hidden) {
           _startLobbyMusic();
         }
       }
