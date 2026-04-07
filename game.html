@@ -4647,18 +4647,34 @@
         enabled: true,
         _fartEl: null,
         _fartReady: false,
+        _fartBuffer: null,
+        _fartGain: null,
         init() {
           if (!this.ctx) {
             const AC = window.AudioContext || window.webkitAudioContext;
             if (AC) this.ctx = new AC();
           }
-          // Preload local fart mp3 once
+          // Preload local fart mp3 once (HTMLAudio path for homepage tap)
           if (!this._fartEl) {
             this._fartEl = new Audio('assets/fart.mp3');
             this._fartEl.preload = 'auto';
             this._fartEl.volume = 0.95;
             this._fartEl.addEventListener('canplaythrough', () => { this._fartReady = true; }, { once: true });
             this._fartEl.load();
+          }
+          // Decode fart.mp3 into WebAudio buffer for low-latency gameplay playback
+          if (this.ctx && !this._fartBuffer && !this._fartBufferLoading) {
+            this._fartBufferLoading = true;
+            fetch('assets/fart.mp3')
+              .then(r => r.arrayBuffer())
+              .then(buf => this.ctx.decodeAudioData(buf))
+              .then(decoded => {
+                this._fartBuffer = decoded;
+                this._fartGain = this.ctx.createGain();
+                this._fartGain.gain.value = 0.95;
+                this._fartGain.connect(this.ctx.destination);
+              })
+              .catch(() => { this._fartBufferLoading = false; });
           }
         },
         warmup() {
@@ -4669,11 +4685,27 @@
           }
           if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
         },
+        // Low-latency WebAudio buffer playback for gameplay fart/boost
+        playFartBuffer() {
+          if (!this.enabled) return;
+          this.init();
+          if (this._fartBuffer && this.ctx) {
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            var src = this.ctx.createBufferSource();
+            src.buffer = this._fartBuffer;
+            src.connect(this._fartGain);
+            src.start(0);
+          } else if (this._fartEl) {
+            // Fallback to HTMLAudio if buffer not yet decoded
+            this._fartEl.currentTime = 0;
+            this._fartEl.play().catch(() => {});
+          }
+        },
         blip(type = 'fart') {
           if (!this.enabled) return;
           this.init();
           if (type === 'fart') {
-            // Play local fart.mp3 — reset to start and replay
+            // HTMLAudio path — used by homepage character tap
             if (this._fartEl) {
               this._fartEl.currentTime = 0;
               this._fartEl.play().catch(() => {});
@@ -5771,7 +5803,7 @@
           });
         }
         }
-        audio.blip('fart');
+        audio.playFartBuffer();
         saveLocal();
         updateSidebar();
       }
