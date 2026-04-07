@@ -4670,7 +4670,7 @@
             filter.frequency.setValueAtTime(900, now);
             filter.frequency.exponentialRampToValueAtTime(160, now + 0.18);
             gain.gain.setValueAtTime(0.001, now);
-            gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
             osc.start(now);
             osc.stop(now + 0.22);
@@ -8170,7 +8170,7 @@
           filter.Q.setValueAtTime(0.7, t);
           // Gentle attack: ramp in over 3ms, then smooth decay
           gain.gain.setValueAtTime(0.001, t);
-          gain.gain.linearRampToValueAtTime(0.09, t + 0.003);
+          gain.gain.linearRampToValueAtTime(0.25, t + 0.003);
           gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
           osc.start(t);
           osc.stop(t + 0.09);
@@ -8190,7 +8190,7 @@
         try {
           var a = new Audio();
           a.preload = 'auto';
-          a.volume = 0.45;
+          a.volume = 0.80;
           a.addEventListener('canplaythrough', function() { _coinRewardReady = true; });
           a.addEventListener('error', function() { _coinRewardReady = false; });
           a.src = 'assets/coin-clink.wav';
@@ -8239,7 +8239,7 @@
       var _lobbyMusic = null;
       var _lobbyMusicReady = false;
       var _lobbyMusicUnlocked = false;
-      var _lobbyMusicVolume = 0.07;
+      var _lobbyMusicVolume = 0.05;
 
       // Preload the lobby music sample
       (function _preloadLobbyMusic() {
