@@ -8368,6 +8368,60 @@
         } catch(e) { /* ignore */ }
       }
 
+      // --- Lobby music: pause on background / resume on foreground ---
+      // Ensures lobby music stops when the user leaves Telegram, locks the
+      // phone, or switches apps, and does not appear in iOS media controls.
+      var _lobbyMusicPausedByHide = false;
+
+      function _onAppHidden() {
+        if (_lobbyMusic && !_lobbyMusic.paused) {
+          _lobbyMusic.pause();
+          _lobbyMusicPausedByHide = true;
+        }
+        // Clear any implicit media-session so iOS doesn't show lock-screen controls
+        if (navigator.mediaSession) {
+          try {
+            navigator.mediaSession.metadata = null;
+            navigator.mediaSession.playbackState = 'none';
+          } catch(e) { /* ignore */ }
+        }
+      }
+
+      function _onAppVisible() {
+        if (!_lobbyMusicPausedByHide) return;
+        _lobbyMusicPausedByHide = false;
+        // Only resume if in lobby, sound is on, and not in gameplay
+        if (document.body.classList.contains('app-revealed') &&
+            !document.body.classList.contains('play-mode') &&
+            state.soundEnabled) {
+          _startLobbyMusic();
+        }
+      }
+
+      // visibilitychange — fires on tab switch, app switch, phone lock
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) { _onAppHidden(); }
+        else { _onAppVisible(); }
+      });
+
+      // pagehide — fires when navigating away or iOS moves app to background
+      window.addEventListener('pagehide', function() {
+        _onAppHidden();
+      });
+
+      // blur — catches cases where Telegram overlay appears or window loses focus
+      window.addEventListener('blur', function() {
+        _onAppHidden();
+      });
+
+      // focus / pageshow — resume when app regains focus
+      window.addEventListener('focus', function() {
+        if (!document.hidden) { _onAppVisible(); }
+      });
+      window.addEventListener('pageshow', function() {
+        if (!document.hidden) { _onAppVisible(); }
+      });
+
       // Portrait-first: orientation detection functions removed
 
       function getViewportSize() {
