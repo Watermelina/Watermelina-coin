@@ -8322,6 +8322,10 @@
             if (decoded) {
               _lobbyMusicBuffer = decoded;
               _lobbyMusicReady = true;
+              // Attempt to start music immediately after decode (during loading screen)
+              if (_lobbyMusicUnlocked && !document.body.classList.contains('play-mode')) {
+                _startLobbyMusic();
+              }
             }
           })
           .catch(function() { _lobbyMusicReady = false; });
@@ -8336,13 +8340,13 @@
           if (ctx.state === 'suspended') {
             ctx.resume().then(function() {
               _lobbyMusicUnlocked = true;
-              if (document.body.classList.contains('app-revealed') && !document.body.classList.contains('play-mode')) {
+              if (!document.body.classList.contains('play-mode')) {
                 _startLobbyMusic();
               }
             }).catch(function() {});
           } else {
             _lobbyMusicUnlocked = true;
-            if (document.body.classList.contains('app-revealed') && !document.body.classList.contains('play-mode')) {
+            if (!document.body.classList.contains('play-mode')) {
               _startLobbyMusic();
             }
           }
@@ -8359,8 +8363,7 @@
           if (!ctx) return;
           if (ctx.state === 'suspended') return; // need interaction
           _lobbyMusicUnlocked = true;
-          if (document.body.classList.contains('app-revealed') &&
-              !document.body.classList.contains('play-mode') &&
+          if (!document.body.classList.contains('play-mode') &&
               state.soundEnabled) {
             _startLobbyMusic();
           }
