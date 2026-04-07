@@ -8368,28 +8368,65 @@
         } catch(e) { /* ignore */ }
       }
 
-      // --- Lobby music: pause on background / resume on foreground ---
-      // Ensures lobby music stops when the user leaves Telegram, locks the
-      // phone, or switches apps, and does not appear in iOS media controls.
+      // --- Lobby music: aggressive stop on background / clean resume on foreground ---
+      // On hide/background/lock: pause, reset time, unload audio source, and
+      // fully clear media-session so iOS removes the app from lock-screen controls.
+      // On resume: rebind audio source and restart if appropriate.
       var _lobbyMusicPausedByHide = false;
+      var _lobbyMusicSrc = 'assets/lobby-music.mp3';
 
       function _onAppHidden() {
-        if (_lobbyMusic && !_lobbyMusic.paused) {
-          _lobbyMusic.pause();
-          _lobbyMusicPausedByHide = true;
-        }
-        // Clear any implicit media-session so iOS doesn't show lock-screen controls
+        if (!_lobbyMusic) return;
+        var wasPlaying = !_lobbyMusic.paused;
+        // 1. Immediate pause + reset position
+        try { _lobbyMusic.pause(); } catch(e) {}
+        try { _lobbyMusic.currentTime = 0; } catch(e) {}
+        // 2. Unload audio source so iOS drops it as an active media item
+        try {
+          _lobbyMusic.removeAttribute('src');
+          _lobbyMusic.load(); // forces iOS to release the media resource
+        } catch(e) {}
+        // 3. Fully clear media-session metadata, playback state, and action handlers
         if (navigator.mediaSession) {
           try {
             navigator.mediaSession.metadata = null;
             navigator.mediaSession.playbackState = 'none';
-          } catch(e) { /* ignore */ }
+            var actions = ['play','pause','stop','seekbackward','seekforward',
+                           'seekto','previoustrack','nexttrack'];
+            for (var i = 0; i < actions.length; i++) {
+              try { navigator.mediaSession.setActionHandler(actions[i], null); } catch(e2) {}
+            }
+          } catch(e) {}
+        }
+        if (wasPlaying) {
+          _lobbyMusicPausedByHide = true;
         }
       }
 
       function _onAppVisible() {
         if (!_lobbyMusicPausedByHide) return;
         _lobbyMusicPausedByHide = false;
+        // Rebind the audio source that was unloaded on hide
+        if (_lobbyMusic) {
+          try {
+            // After removeAttribute('src') + load(), .src becomes '' or the page URL
+            if (!_lobbyMusic.getAttribute('src')) {
+              _lobbyMusic.src = _lobbyMusicSrc;
+              _lobbyMusic.load();
+              _lobbyMusicReady = false;
+              _lobbyMusic.addEventListener('canplaythrough', function() {
+                _lobbyMusicReady = true;
+                // Auto-start once reloaded if conditions still hold
+                if (_lobbyMusic && !_lobbyMusic.paused) return; // already playing
+                if (document.body.classList.contains('app-revealed') &&
+                    !document.body.classList.contains('play-mode') &&
+                    state.soundEnabled && !document.hidden) {
+                  _startLobbyMusic();
+                }
+              }, { once: true });
+            }
+          } catch(e) {}
+        }
         // Only resume if in lobby, sound is on, and not in gameplay
         if (document.body.classList.contains('app-revealed') &&
             !document.body.classList.contains('play-mode') &&
