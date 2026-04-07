@@ -7634,7 +7634,6 @@
           if (result.success && result.claimed > 0) {
             showToast('Claimed ' + Number(result.claimed).toLocaleString() + ' WP!', 'success');
             if (window.haptic) window.haptic('chest');
-            if (window.playCoinReward) window.playCoinReward();
             await loadReferralList();
           } else {
             btn.textContent = 'Claim';
@@ -7667,7 +7666,6 @@
           if (result.success && result.claimed > 0) {
             showToast('Claimed ' + Number(result.claimed).toLocaleString() + ' WP!', 'success');
             if (window.haptic) window.haptic('chest');
-            if (window.playCoinReward) window.playCoinReward();
             await loadReferralList();
           } else {
             btn.textContent = 'Claim All';
@@ -8176,102 +8174,58 @@
       }
       window.playUiTap = playUiTap;
 
-      // === Coin Reward Sound (Sample-based) ===
-      // Plays a real coin-clink audio sample for reward/claim actions only.
-      // Sample loaded from a direct WAV file URL.
-      var _COIN_REWARD_SRC = 'https://n.uguu.se/bgmZSsSf.wav';
-      var _coinRewardAudio = null;   // HTMLAudioElement (preloaded)
-      var _coinRewardReady = false;  // true once sample is playable
-      var _coinRewardLoadError = false;
+      // === Coin Reward Sound (local sample) ===
+      // Plays assets/coin-clink.wav on successful FC claim actions only.
+      var _coinRewardAudio = null;
+      var _coinRewardReady = false;
       var _coinRewardLastTime = 0;
-      var _coinRewardCooldown = 80;  // ms — prevent harsh stacking on rapid claims
-      var _coinRewardTrimTimer = null; // timer to stop playback early for tight clink
+      var _coinRewardCooldown = 80; // ms — prevent harsh stacking on rapid claims
 
-      // Synthesised fallback (original 2-layer clink) used when sample fails to load
-      function _playCoinRewardSynth() {
-        var ctx = _getUiTapCtx();
-        if (!ctx) return;
-        if (ctx.state === 'suspended') { ctx.resume().catch(function(){}); return; }
-        try {
-          var t = ctx.currentTime;
-          var osc1 = ctx.createOscillator();
-          var gain1 = ctx.createGain();
-          osc1.connect(gain1); gain1.connect(ctx.destination);
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(1050, t);
-          osc1.frequency.exponentialRampToValueAtTime(880, t + 0.12);
-          gain1.gain.setValueAtTime(0.001, t);
-          gain1.gain.linearRampToValueAtTime(0.18, t + 0.004);
-          gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-          osc1.start(t); osc1.stop(t + 0.13);
-          var delay2 = 0.015;
-          var osc2 = ctx.createOscillator();
-          var gain2 = ctx.createGain();
-          osc2.connect(gain2); gain2.connect(ctx.destination);
-          osc2.type = 'triangle';
-          osc2.frequency.setValueAtTime(1400, t + delay2);
-          osc2.frequency.exponentialRampToValueAtTime(1100, t + delay2 + 0.08);
-          gain2.gain.setValueAtTime(0.001, t + delay2);
-          gain2.gain.linearRampToValueAtTime(0.09, t + delay2 + 0.003);
-          gain2.gain.exponentialRampToValueAtTime(0.001, t + delay2 + 0.08);
-          osc2.start(t + delay2); osc2.stop(t + delay2 + 0.09);
-        } catch(e) { /* ignore */ }
-      }
-
-      // Preload the coin reward sample
+      // Preload the local coin reward sample
       (function _preloadCoinReward() {
-        console.log('[DEBUG-REWARD] Preload starting for:', _COIN_REWARD_SRC);
         try {
           var a = new Audio();
           a.preload = 'auto';
           a.volume = 0.45;
-          a.crossOrigin = 'anonymous';
-
-          a.addEventListener('canplaythrough', function() {
-            _coinRewardReady = true;
-            console.log('[DEBUG-REWARD] canplaythrough fired — WAV is ready');
-          });
-
-          a.addEventListener('error', function(e) {
-            _coinRewardLoadError = true;
-            console.warn('[DEBUG-REWARD] ERROR loading WAV:', e && e.message ? e.message : e);
-          });
-
-          a.src = _COIN_REWARD_SRC;
+          a.addEventListener('canplaythrough', function() { _coinRewardReady = true; });
+          a.addEventListener('error', function() { _coinRewardReady = false; });
+          a.src = 'assets/coin-clink.wav';
           _coinRewardAudio = a;
-          console.log('[DEBUG-REWARD] Audio element created, src set');
-        } catch(e) {
-          _coinRewardLoadError = true;
-          console.warn('[DEBUG-REWARD] Preload exception:', e);
+        } catch(e) { /* ignore */ }
+      })();
+
+      // Unlock/warm-up audio on first user interaction (Telegram/Safari requirement).
+      // Plays a silent snippet so later programmatic playback is allowed.
+      (function _unlockCoinRewardAudio() {
+        function unlock() {
+          if (_coinRewardAudio) {
+            var origVol = _coinRewardAudio.volume;
+            _coinRewardAudio.volume = 0;
+            _coinRewardAudio.play().then(function() {
+              _coinRewardAudio.pause();
+              _coinRewardAudio.currentTime = 0;
+              _coinRewardAudio.volume = origVol;
+            }).catch(function() {});
+          }
+          document.removeEventListener('touchstart', unlock, true);
+          document.removeEventListener('click', unlock, true);
         }
+        document.addEventListener('touchstart', unlock, true);
+        document.addEventListener('click', unlock, true);
       })();
 
       function playCoinReward() {
-        console.log('[DEBUG-REWARD] playCoinReward() called | ready=' + _coinRewardReady + ' | loadError=' + _coinRewardLoadError + ' | audioEl=' + !!_coinRewardAudio);
-        // Respect sound enabled state
-        if (window._wmAudio && !window._wmAudio.enabled) { console.log('[DEBUG-REWARD] Sound disabled, skipping'); return; }
-        // Debounce — prevent harsh stacking on rapid claims
+        if (window._wmAudio && !window._wmAudio.enabled) return;
         var now = Date.now();
-        if (now - _coinRewardLastTime < _coinRewardCooldown) { console.log('[DEBUG-REWARD] Debounced, skipping'); return; }
+        if (now - _coinRewardLastTime < _coinRewardCooldown) return;
         _coinRewardLastTime = now;
 
-        // If sample loaded successfully, play it (NO trim — let full WAV play for debug)
-        if (_coinRewardReady && _coinRewardAudio && !_coinRewardLoadError) {
-          console.log('[DEBUG-REWARD] >>> PLAYING WAV PATH (full, no trim)');
+        if (_coinRewardReady && _coinRewardAudio) {
           try {
             _coinRewardAudio.currentTime = 0;
-            _coinRewardAudio.play().then(function() {
-              console.log('[DEBUG-REWARD] WAV play() promise resolved OK');
-            }).catch(function(err) {
-              console.warn('[DEBUG-REWARD] WAV play() promise REJECTED:', err);
-            });
-            // DEBUG: trim disabled — let full WAV play
-          } catch(e) { console.warn('[DEBUG-REWARD] WAV play exception:', e); }
-          return;
+            _coinRewardAudio.play().catch(function() {});
+          } catch(e) { /* ignore */ }
         }
-
-        // DEBUG: fallback synth DISABLED — play nothing if WAV failed
-        console.warn('[DEBUG-REWARD] WAV not available, fallback DISABLED — playing nothing');
       }
       window.playCoinReward = playCoinReward;
 
