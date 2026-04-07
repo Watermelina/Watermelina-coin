@@ -7997,6 +7997,8 @@
       ui.soundBtn.addEventListener('click', () => {
         state.soundEnabled = !state.soundEnabled;
         audio.enabled = state.soundEnabled;
+        if (!state.soundEnabled) { _stopLobbyMusic(); }
+        else if (!document.body.classList.contains('play-mode')) { _startLobbyMusic(); }
         saveLocal();
         updateSidebar();
         if (window.haptic) window.haptic('tap');
@@ -8004,6 +8006,8 @@
       if (ui.soundBtnFloat) ui.soundBtnFloat.addEventListener('click', () => {
         state.soundEnabled = !state.soundEnabled;
         audio.enabled = state.soundEnabled;
+        if (!state.soundEnabled) { _stopLobbyMusic(); }
+        else if (!document.body.classList.contains('play-mode')) { _startLobbyMusic(); }
         saveLocal();
         updateSidebar();
         if (window.haptic) window.haptic('tap');
@@ -8235,7 +8239,7 @@
       var _lobbyMusic = null;
       var _lobbyMusicReady = false;
       var _lobbyMusicUnlocked = false;
-      var _lobbyMusicVolume = 0.25;
+      var _lobbyMusicVolume = 0.12;
 
       // Preload the lobby music sample
       (function _preloadLobbyMusic() {
@@ -8252,7 +8256,8 @@
       })();
 
       // Unlock lobby music on first user interaction (Telegram/Safari autoplay policy).
-      // Plays a silent snippet so later programmatic playback is allowed.
+      // Also attempt immediate autoplay after load — if blocked, fall back to interaction unlock.
+      var _lobbyMusicPendingAutoplay = false;
       (function _unlockLobbyMusic() {
         function unlock() {
           if (_lobbyMusicUnlocked) return;
@@ -8277,10 +8282,41 @@
         }
         document.addEventListener('touchstart', unlock, true);
         document.addEventListener('click', unlock, true);
+
+        // Attempt immediate autoplay once the page is interactive
+        function tryAutoplay() {
+          if (_lobbyMusicUnlocked) return;
+          if (!_lobbyMusic || !_lobbyMusicReady) {
+            _lobbyMusicPendingAutoplay = true;
+            return;
+          }
+          _lobbyMusicUnlocked = true;
+          _lobbyMusic.play().then(function() {
+            // Autoplay succeeded — music is now unlocked and playing
+            if (!document.body.classList.contains('app-revealed') || document.body.classList.contains('play-mode') || !state.soundEnabled) {
+              _lobbyMusic.pause();
+              _lobbyMusic.currentTime = 0;
+            }
+            document.removeEventListener('touchstart', unlock, true);
+            document.removeEventListener('click', unlock, true);
+          }).catch(function() {
+            // Autoplay blocked — rely on interaction-based unlock
+            _lobbyMusicUnlocked = false;
+            _lobbyMusicPendingAutoplay = true;
+          });
+        }
+        // Try autoplay after a short delay to let the page settle
+        if (document.readyState === 'complete') {
+          setTimeout(tryAutoplay, 300);
+        } else {
+          window.addEventListener('load', function() { setTimeout(tryAutoplay, 300); }, { once: true });
+        }
       })();
 
       function _startLobbyMusic() {
         if (!_lobbyMusic || !_lobbyMusicReady || !_lobbyMusicUnlocked) return;
+        // Respect global sound toggle
+        if (!state.soundEnabled) return;
         // Prevent restarting if already playing
         if (!_lobbyMusic.paused) return;
         try {
