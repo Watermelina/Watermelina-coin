@@ -8229,6 +8229,73 @@
       }
       window.playCoinReward = playCoinReward;
 
+      // === Lobby Background Music ===
+      // Plays assets/lobby-music.mp3 on loop while in the homepage/lobby state.
+      // Stops during gameplay and loading. Resumes when returning to lobby.
+      var _lobbyMusic = null;
+      var _lobbyMusicReady = false;
+      var _lobbyMusicUnlocked = false;
+      var _lobbyMusicVolume = 0.25;
+
+      // Preload the lobby music sample
+      (function _preloadLobbyMusic() {
+        try {
+          var a = new Audio();
+          a.preload = 'auto';
+          a.loop = true;
+          a.volume = _lobbyMusicVolume;
+          a.addEventListener('canplaythrough', function() { _lobbyMusicReady = true; }, { once: true });
+          a.addEventListener('error', function() { _lobbyMusicReady = false; });
+          a.src = 'assets/lobby-music.mp3';
+          _lobbyMusic = a;
+        } catch(e) { /* ignore */ }
+      })();
+
+      // Unlock lobby music on first user interaction (Telegram/Safari autoplay policy).
+      // Plays a silent snippet so later programmatic playback is allowed.
+      (function _unlockLobbyMusic() {
+        function unlock() {
+          if (_lobbyMusicUnlocked) return;
+          _lobbyMusicUnlocked = true;
+          if (_lobbyMusic) {
+            var origVol = _lobbyMusic.volume;
+            _lobbyMusic.volume = 0;
+            _lobbyMusic.play().then(function() {
+              _lobbyMusic.pause();
+              _lobbyMusic.currentTime = 0;
+              _lobbyMusic.volume = origVol;
+              // If lobby is already visible, start playing now
+              if (document.body.classList.contains('app-revealed') && !document.body.classList.contains('play-mode')) {
+                _startLobbyMusic();
+              }
+            }).catch(function() {
+              _lobbyMusicUnlocked = false; // retry on next interaction
+            });
+          }
+          document.removeEventListener('touchstart', unlock, true);
+          document.removeEventListener('click', unlock, true);
+        }
+        document.addEventListener('touchstart', unlock, true);
+        document.addEventListener('click', unlock, true);
+      })();
+
+      function _startLobbyMusic() {
+        if (!_lobbyMusic || !_lobbyMusicReady || !_lobbyMusicUnlocked) return;
+        // Prevent restarting if already playing
+        if (!_lobbyMusic.paused) return;
+        try {
+          _lobbyMusic.play().catch(function() {});
+        } catch(e) { /* ignore */ }
+      }
+
+      function _stopLobbyMusic() {
+        if (!_lobbyMusic) return;
+        if (_lobbyMusic.paused) return;
+        try {
+          _lobbyMusic.pause();
+        } catch(e) { /* ignore */ }
+      }
+
       // Portrait-first: orientation detection functions removed
 
       function getViewportSize() {
@@ -8489,6 +8556,7 @@
       }
 
       function enterPlayMode() {
+        _stopLobbyMusic();
         document.body.classList.add('play-mode');
         document.documentElement.classList.add('play-mode');
 
@@ -8609,6 +8677,7 @@
         }
         updateTapOverlay();
         window.scrollTo(0, 0);
+        _startLobbyMusic();
       }
 
       document.getElementById('playModeBack').addEventListener('click', function(e) {
@@ -11719,6 +11788,8 @@
         requestAnimationFrame(function() {
           document.body.classList.add('app-revealed');
           console.log('[DIAGNOSTIC] Homepage revealed (app-revealed added) at', Date.now(), 'innerHeight:', window.innerHeight);
+          // Start lobby music now that homepage is visible
+          if (typeof _startLobbyMusic === 'function') _startLobbyMusic();
           // Hide splash AFTER reveal is painted — keep in DOM to avoid reflow
           setTimeout(function() {
             if (splash) {
