@@ -7,7 +7,7 @@ const scoreEl = document.getElementById('score');
 const bestEl = document.getElementById('best');
 const finalScoreEl = document.getElementById('finalScore');
 const shareXBtn = document.getElementById('shareX');
-const fartSound = new Audio('assets/fart.wav');
+const fartSound = new Audio('assets/fart.mp3');
 
 function fitCanvas(){
   const maxW = Math.min(window.innerWidth - 36, 720);

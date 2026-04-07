@@ -4645,15 +4645,41 @@
       const audio = {
         ctx: null,
         enabled: true,
+        _fartEl: null,
+        _fartReady: false,
         init() {
           if (!this.ctx) {
             const AC = window.AudioContext || window.webkitAudioContext;
             if (AC) this.ctx = new AC();
           }
+          // Preload local fart mp3 once
+          if (!this._fartEl) {
+            this._fartEl = new Audio('assets/fart.mp3');
+            this._fartEl.preload = 'auto';
+            this._fartEl.volume = 0.95;
+            this._fartEl.addEventListener('canplaythrough', () => { this._fartReady = true; }, { once: true });
+            this._fartEl.load();
+          }
+        },
+        warmup() {
+          // Call on first user interaction to unlock audio on iOS/Safari/Telegram
+          this.init();
+          if (this._fartEl) {
+            this._fartEl.play().then(() => { this._fartEl.pause(); this._fartEl.currentTime = 0; }).catch(() => {});
+          }
+          if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
         },
         blip(type = 'fart') {
           if (!this.enabled) return;
           this.init();
+          if (type === 'fart') {
+            // Play local fart.mp3 — reset to start and replay
+            if (this._fartEl) {
+              this._fartEl.currentTime = 0;
+              this._fartEl.play().catch(() => {});
+            }
+            return;
+          }
           if (!this.ctx) return;
           const now = this.ctx.currentTime;
           const osc = this.ctx.createOscillator();
@@ -4662,19 +4688,7 @@
           osc.connect(filter);
           filter.connect(gain);
           gain.connect(this.ctx.destination);
-          if (type === 'fart') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(180, now);
-            osc.frequency.exponentialRampToValueAtTime(55, now + 0.18);
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(900, now);
-            filter.frequency.exponentialRampToValueAtTime(160, now + 0.18);
-            gain.gain.setValueAtTime(0.001, now);
-            gain.gain.exponentialRampToValueAtTime(0.6, now + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-            osc.start(now);
-            osc.stop(now + 0.22);
-          } else if (type === 'pickup') {
+          if (type === 'pickup') {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(420, now);
             osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
@@ -7345,7 +7359,7 @@
 
       function inputBoost(e) {
         if (e && e.cancelable) e.preventDefault();
-        audio.init();
+        audio.warmup();
         // If not running, start or restart the run on tap/click
         if (!state.running && !state._startingRun) {
           tryEnterFullscreen();
@@ -11908,15 +11922,15 @@
   var fartAnchorEl = document.getElementById('fartAnchor');
 
   // --- Fart sound (reuses exact gameplay fart-boost sound via window._wmAudio, respects mute state) ---
+  var _homeFartWarmedUp = false;
   function playFartSound() {
     var a = window._wmAudio;
     if (a && a.blip) {
-      // Ensure AudioContext is initialized and resumed (required for mobile/Telegram WebView)
-      a.init();
-      if (a.ctx && a.ctx.state === 'suspended') {
-        a.ctx.resume();
+      // Warm up audio on first tap (unlocks playback on iOS/Safari/Telegram)
+      if (!_homeFartWarmedUp) {
+        if (a.warmup) a.warmup();
+        _homeFartWarmedUp = true;
       }
-      // a.blip already checks a.enabled internally
       a.blip('fart');
     }
   }
