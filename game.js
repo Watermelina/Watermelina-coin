@@ -7,7 +7,7 @@ const scoreEl = document.getElementById('score');
 const bestEl = document.getElementById('best');
 const finalScoreEl = document.getElementById('finalScore');
 const shareXBtn = document.getElementById('shareX');
-const fartSound = new Audio('assets/fart.wav');
+const fartSound = new Audio('assets/fart.mp3');
 
 const TARGET_MS = 1000 / 60; // 16.667ms — baseline frame time at 60fps
 let lastTime = 0;
