@@ -1,6 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { awardReferralFC } from './_referral-fc.mjs';
-
 // ── Supabase connection ─────────────────────────────────────────
 const SUPABASE_URL_FALLBACK = 'https://tivqekyexiknxzbbrgun.supabase.co';
 const SUPABASE_ANON_KEY_FALLBACK = 'sb_publishable_-tvso--RThiDAbEUBClcxA_n9LEedEw';
@@ -26,23 +24,6 @@ function getSupabase() {
 }
 
 const ALLOWED_MISSIONS = ['PLAY_3_RUNS', 'COLLECT_30_SEEDS', 'REACH_500_SCORE'];
-
-function buildDailyMissionReferralEventKey(userId, missionKey, result) {
-  const explicitEventId = result?.daily_mission_claim_event_id
-    || result?.claim_event_id
-    || result?.point_event_id
-    || result?.event_id;
-
-  if (explicitEventId) {
-    return `daily-mission-claim:${explicitEventId}`;
-  }
-
-  const missionDate = (typeof result?.mission_date === 'string' && result.mission_date.trim())
-    ? result.mission_date.trim()
-    : 'unknown-date';
-
-  return `daily-mission-claim:${userId}:${missionKey}:${missionDate}`;
-}
 
 export default async (req) => {
   if (req.method !== 'POST') {
@@ -100,19 +81,6 @@ export default async (req) => {
     let result = data;
     if (typeof result === 'string') {
       try { result = JSON.parse(result); } catch { /* use as-is */ }
-    }
-
-    const earnedFC = Number(result?.reward_fc) || 0;
-    if (result?.success && earnedFC > 0) {
-      try {
-        const referralEventKey = buildDailyMissionReferralEventKey(userId, mission_key, result);
-        const referralResult = await awardReferralFC(supabase, userId, earnedFC, referralEventKey);
-        if (referralResult.rewarded) {
-          console.log(`[CLAIM-DAILY] Referral FC awarded: ${referralResult.rewardFC}`);
-        }
-      } catch (refErr) {
-        console.error(`[CLAIM-DAILY] Referral FC award failed: ${refErr.message}`);
-      }
     }
 
     console.log(`[CLAIM-DAILY] ── Result ── ${JSON.stringify(result)}`);
