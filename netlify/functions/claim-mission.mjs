@@ -1,6 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { awardReferralFC } from './_referral-fc.mjs';
-
 // ── Supabase connection ─────────────────────────────────────────
 const SUPABASE_URL_FALLBACK = 'https://tivqekyexiknxzbbrgun.supabase.co';
 const SUPABASE_ANON_KEY_FALLBACK = 'sb_publishable_-tvso--RThiDAbEUBClcxA_n9LEedEw';
@@ -23,19 +21,6 @@ function getSupabase() {
   }
 
   return createClient(url, key);
-}
-
-function buildMissionReferralEventKey(userId, missionId, result) {
-  const explicitEventId = result?.mission_claim_event_id
-    || result?.claim_event_id
-    || result?.point_event_id
-    || result?.event_id;
-
-  if (explicitEventId) {
-    return `mission-claim:${explicitEventId}`;
-  }
-
-  return `mission-claim:${userId}:${missionId}`;
 }
 
 export default async (req) => {
@@ -90,19 +75,6 @@ export default async (req) => {
     let result = data;
     if (typeof result === 'string') {
       try { result = JSON.parse(result); } catch { /* use as-is */ }
-    }
-
-    const earnedFC = Number(result?.reward_fc) || 0;
-    if (result?.success && earnedFC > 0) {
-      try {
-        const referralEventKey = buildMissionReferralEventKey(userId, mission_id, result);
-        const referralResult = await awardReferralFC(supabase, userId, earnedFC, referralEventKey);
-        if (referralResult.rewarded) {
-          console.log(`[CLAIM-MISSION] Referral FC awarded: ${referralResult.rewardFC}`);
-        }
-      } catch (refErr) {
-        console.error(`[CLAIM-MISSION] Referral FC award failed: ${refErr.message}`);
-      }
     }
 
     console.log(`[CLAIM-MISSION] ── Result ── ${JSON.stringify(result)}`);

@@ -71,28 +71,7 @@ export default async (req) => {
       userMap[u.id] = u;
     }
 
-    // 3. Get total referral_fc_reward points already paid to this referrer, grouped by referred user
-    // point_events with event_type='referral_fc_reward' have metadata.referred_user_id
-    const { data: paidEvents, error: paidErr } = await supabase
-      .from('point_events')
-      .select('points, metadata')
-      .eq('user_id', userId)
-      .eq('event_type', 'referral_fc_reward');
-
-    if (paidErr) {
-      console.error('[GET-REFERRAL-LIST] paid events query failed:', paidErr.message);
-    }
-
-    // Sum paid bonuses per referred user
-    const paidByReferred = {};
-    for (const ev of (paidEvents || [])) {
-      const refUserId = ev.metadata?.referred_user_id;
-      if (refUserId) {
-        paidByReferred[refUserId] = (paidByReferred[refUserId] || 0) + (Number(ev.points) || 0);
-      }
-    }
-
-    // 4. Get total referral_bonus_claim events (claimed bonuses)
+    // 3. Get total referral_bonus_claim events (claimed bonuses)
     const { data: claimedEvents, error: claimedErr } = await supabase
       .from('point_events')
       .select('points, metadata')
