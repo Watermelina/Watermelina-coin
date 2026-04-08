@@ -58,8 +58,9 @@ export default async (req) => {
     p_score,
     p_seeds,
     p_max_combo,
+    p_avg_combo,
     p_time_survived,
-    p_duration_seconds
+    p_level
   } = body || {};
 
   if (!p_user_id) {
@@ -71,7 +72,9 @@ export default async (req) => {
     p_score,
     p_seeds,
     p_max_combo,
-    p_duration_seconds: p_duration_seconds ?? p_time_survived
+    p_avg_combo,
+    p_time_survived,
+    p_level
   };
 
   try {
