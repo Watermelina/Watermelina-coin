@@ -6198,6 +6198,7 @@
 
       function failRun() {
         // Extra Life disabled for Season 1 — player dies immediately on collision
+        _stopGameplayMusic();
 
         state.running = false;
         state.gameOver = true;
@@ -8046,7 +8047,7 @@
       ui.soundBtn.addEventListener('click', () => {
         state.soundEnabled = !state.soundEnabled;
         audio.enabled = state.soundEnabled;
-        if (!state.soundEnabled) { _stopLobbyMusic(); }
+        if (!state.soundEnabled) { _stopLobbyMusic(); _stopGameplayMusic(); }
         else if (!document.body.classList.contains('play-mode')) { _startLobbyMusic(); }
         saveLocal();
         updateSidebar();
@@ -8055,7 +8056,7 @@
       if (ui.soundBtnFloat) ui.soundBtnFloat.addEventListener('click', () => {
         state.soundEnabled = !state.soundEnabled;
         audio.enabled = state.soundEnabled;
-        if (!state.soundEnabled) { _stopLobbyMusic(); }
+        if (!state.soundEnabled) { _stopLobbyMusic(); _stopGameplayMusic(); }
         else if (!document.body.classList.contains('play-mode')) { _startLobbyMusic(); }
         saveLocal();
         updateSidebar();
@@ -8415,26 +8416,118 @@
         _lobbyMusicPlaying = false;
       }
 
-      // --- Lobby music: stop on background / resume on foreground ---
-      function _onAppHidden() {
-        var wasPlaying = _lobbyMusicPlaying;
+      // === Gameplay Background Music (WebAudio) ===
+      // Plays assets/gameplay-music.mp3 on loop during active gameplay.
+      var _gameplayMusicBuffer = null;   // decoded AudioBuffer (loaded once)
+      var _gameplayMusicSource = null;   // active AudioBufferSourceNode
+      var _gameplayMusicGain = null;     // dedicated GainNode for gameplay music volume
+      var _gameplayMusicPlaying = false;
+      var _gameplayMusicReady = false;
+      var _gameplayMusicVolume = 0.11;
+
+      function _ensureGameplayMusicGain() {
+        var ctx = _ensureLobbyAudioCtx(); // reuse shared AudioContext
+        if (ctx && !_gameplayMusicGain) {
+          _gameplayMusicGain = ctx.createGain();
+          _gameplayMusicGain.gain.value = _gameplayMusicVolume;
+          _gameplayMusicGain.connect(ctx.destination);
+        }
+      }
+
+      // Fetch and decode gameplay music into an AudioBuffer (once)
+      (function _preloadGameplayMusic() {
+        fetch('assets/gameplay-music.mp3')
+          .then(function(resp) { return resp.arrayBuffer(); })
+          .then(function(arrayBuf) {
+            var ctx = _ensureLobbyAudioCtx();
+            if (!ctx) return;
+            return ctx.decodeAudioData(arrayBuf);
+          })
+          .then(function(decoded) {
+            if (decoded) {
+              _gameplayMusicBuffer = decoded;
+              _gameplayMusicReady = true;
+            }
+          })
+          .catch(function() { _gameplayMusicReady = false; });
+      })();
+
+      function _startGameplayMusic() {
+        if (!_gameplayMusicReady || !_gameplayMusicBuffer) return;
+        if (!state.soundEnabled) return;
+        if (_gameplayMusicPlaying) return; // prevent duplicates
+        _ensureGameplayMusicGain();
+        var ctx = audio.ctx;
+        if (!ctx) return;
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(function() {});
+        }
+        // Stop lobby music first to prevent overlap
         _stopLobbyMusic();
-        if (wasPlaying) {
+        try {
+          if (_gameplayMusicSource) {
+            try { _gameplayMusicSource.stop(); } catch(e) {}
+            _gameplayMusicSource = null;
+          }
+          var src = ctx.createBufferSource();
+          src.buffer = _gameplayMusicBuffer;
+          src.loop = true;
+          src.connect(_gameplayMusicGain);
+          src.onended = function() {
+            if (_gameplayMusicSource === src) {
+              _gameplayMusicSource = null;
+              _gameplayMusicPlaying = false;
+            }
+          };
+          src.start(0);
+          _gameplayMusicSource = src;
+          _gameplayMusicPlaying = true;
+        } catch(e) { /* ignore */ }
+      }
+
+      function _stopGameplayMusic() {
+        if (!_gameplayMusicPlaying || !_gameplayMusicSource) return;
+        try {
+          _gameplayMusicSource.stop();
+        } catch(e) { /* ignore */ }
+        _gameplayMusicSource = null;
+        _gameplayMusicPlaying = false;
+      }
+
+      // --- Music: stop on background / resume on foreground ---
+      var _gameplayMusicPausedByHide = false;
+      function _onAppHidden() {
+        var wasPlayingLobby = _lobbyMusicPlaying;
+        var wasPlayingGameplay = _gameplayMusicPlaying;
+        _stopLobbyMusic();
+        _stopGameplayMusic();
+        if (wasPlayingLobby) {
           _lobbyMusicPausedByHide = true;
+        }
+        if (wasPlayingGameplay) {
+          _gameplayMusicPausedByHide = true;
         }
       }
 
       function _onAppVisible() {
-        if (!_lobbyMusicPausedByHide) return;
+        var hadLobby = _lobbyMusicPausedByHide;
+        var hadGameplay = _gameplayMusicPausedByHide;
         _lobbyMusicPausedByHide = false;
+        _gameplayMusicPausedByHide = false;
+        if (!hadLobby && !hadGameplay) return;
         // Resume the AudioContext if it was suspended
         if (audio.ctx && audio.ctx.state === 'suspended') {
           audio.ctx.resume().catch(function() {});
         }
-        // Only resume if in lobby, sound is on, and not in gameplay
-        if (document.body.classList.contains('app-revealed') &&
-            !document.body.classList.contains('play-mode') &&
-            state.soundEnabled && !document.hidden) {
+        if (!state.soundEnabled || document.hidden) return;
+        // Resume gameplay music if was playing and still in gameplay
+        if (hadGameplay && document.body.classList.contains('play-mode') && state.running) {
+          _startGameplayMusic();
+          return;
+        }
+        // Otherwise resume lobby music if in lobby
+        if (hadLobby && document.body.classList.contains('app-revealed') &&
+            !document.body.classList.contains('play-mode')) {
           _startLobbyMusic();
         }
       }
@@ -8724,6 +8817,7 @@
 
       function enterPlayMode() {
         _stopLobbyMusic();
+        _startGameplayMusic();
         document.body.classList.add('play-mode');
         document.documentElement.classList.add('play-mode');
 
@@ -8796,6 +8890,7 @@
 
       function exitPlayMode() {
         // Telegram: deactivate overlay and move canvas back to original location
+        _stopGameplayMusic();
         if (_isTelegramEnv) {
           var overlay = document.getElementById('playModeOverlay');
           var gameWrap = document.querySelector('.game-wrap');
