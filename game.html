@@ -6152,14 +6152,13 @@
           // Balance refresh failed — continue with existing reward values
         }
 
-        // 6. Last-resort client-side formula fallback — guarantees non-zero runs show non-zero rewards
-        if (state.lastRunFartCoins === 0 && state.lastRunWatermelonPoints === 0 && seeds > 0) {
-          const fallbackMaxCombo = state.runStats.maxCombo || 1;
+        // 6. Last-resort client-side formula fallback — guarantees non-zero runs show non-zero FC rewards
+        // NOTE: WP fallback removed — WP must only come from Supabase RPC to prevent phantom WP
+        if (state.lastRunFartCoins === 0 && seeds > 0) {
           const fallbackAvgCombo = state.comboSamples > 0 ? Math.round((state.comboSum / state.comboSamples) * 100) / 100 : 1;
           const fallbackTime = state.lastRunTimeSurvived || 0;
-          // Season 1 formulas
+          // Season 1 formula (FC only)
           const fallbackFc = Math.ceil((seeds * fallbackAvgCombo) + (fallbackTime * 0.5));
-          const fallbackWmp = Math.ceil((seeds * 0.5) + (fallbackMaxCombo * 3) + (fallbackTime * 0.2));
           // Apply FC Boost multiplier
           const fbFcbLevel = state.upgradeEffects.fart_coin_boost || 0;
           const fbFcMult = getFartCoinBoostMult(fbFcbLevel);
@@ -6167,9 +6166,7 @@
           state.lastRunFartCoins = fbBoostedFc;
           state.lastRunFartCoinsBase = fallbackFc;
           state.lastRunFartCoinsBonus = fbBoostedFc - fallbackFc;
-          state.lastRunWatermelonPoints = fallbackWmp;
           state.fartCoins += fbBoostedFc;
-          state.watermelonPoints += fallbackWmp;
           saveLocal();
           updateSidebar();
         }
