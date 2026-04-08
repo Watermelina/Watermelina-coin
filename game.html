@@ -3800,6 +3800,7 @@
   <button class="play-mode-back" id="playModeBack">&#8592; Hub</button>
   <!-- Mobile Landscape Overlay HUD (non-Telegram fallback) -->
   <div class="ml-hud-overlay" id="mlHudOverlay">
+    <button id="gameplaySoundToggleMl" style="position:absolute;top:48px;left:8px;z-index:120;background:rgba(0,0,0,0.45);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;color:#fff;padding:0;opacity:0.85;pointer-events:auto;" onclick="return false;">&#128266;</button>
     <div class="ml-hud-item score"><span class="ml-hud-label">Score</span><span class="ml-hud-val" id="mlScore">0</span></div>
     <div class="ml-hud-item seeds"><span class="ml-hud-label">Seeds</span><span class="ml-hud-val" id="mlSeeds">0</span></div>
     <div class="ml-hud-item combo"><span class="ml-hud-label">Combo</span><span class="ml-hud-val" id="mlCombo">x1</span></div>
@@ -3811,6 +3812,7 @@
     <div id="playGameFrame">
       <!-- canvas-scene-wrap will be moved here by JS -->
       <div id="playInGameHud">
+        <button id="gameplaySoundToggle" style="position:absolute;top:48px;left:8px;z-index:120;background:rgba(0,0,0,0.45);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;color:#fff;padding:0;opacity:0.85;pointer-events:auto;" onclick="return false;">&#128266;</button>
         <div class="hud-row">
           <div class="hud-cell score"><span class="hud-lbl">Score</span><span class="hud-val" id="pHudScore">0</span></div>
           <div class="hud-cell seeds"><span class="hud-lbl">Seeds</span><span class="hud-val" id="pHudSeeds">0</span></div>
@@ -4685,6 +4687,7 @@
         // Lightweight generated WebAudio fart sound for gameplay boost
         playFartBuffer() {
           if (!this.enabled) return;
+          if (!state.gameplaySoundEnabled) return;
           this._initCtx();
           if (!this.ctx) return;
           if (this.ctx.state === 'suspended') this.ctx.resume();
@@ -4716,6 +4719,8 @@
             src.start(0);
             return;
           }
+          // Gate gameplay-only SFX (pickup, hit) on gameplaySoundEnabled
+          if (!state.gameplaySoundEnabled) return;
           this._initCtx();
           if (!this.ctx) return;
           var now = this.ctx.currentTime;
@@ -4797,6 +4802,7 @@
         walletConnected: false,
         walletAddress: null,
         soundEnabled: true,
+        gameplaySoundEnabled: true,
         leaderboard: [],
         leaderboardRows: [],
         frame: 0,
@@ -6198,7 +6204,7 @@
 
       function failRun() {
         // Extra Life disabled for Season 1 — player dies immediately on collision
-        _stopGameplayMusic();
+        // Gameplay music continues through death — only stops on exitPlayMode, app hide, or sound toggle off
 
         state.running = false;
         state.gameOver = true;
@@ -8062,6 +8068,25 @@
         updateSidebar();
         if (window.haptic) window.haptic('tap');
       });
+      // Gameplay-only sound toggle button
+      var _gpSndToggle = document.getElementById('gameplaySoundToggle');
+      var _gpSndToggleMl = document.getElementById('gameplaySoundToggleMl');
+      function _updateGpSndBtns() {
+        var icon = state.gameplaySoundEnabled ? '\u{1F50A}' : '\u{1F507}';
+        if (_gpSndToggle) _gpSndToggle.textContent = icon;
+        if (_gpSndToggleMl) _gpSndToggleMl.textContent = icon;
+      }
+      function _handleGpSndToggle() {
+        state.gameplaySoundEnabled = !state.gameplaySoundEnabled;
+        _updateGpSndBtns();
+        if (!state.gameplaySoundEnabled) {
+          _stopGameplayMusic();
+        } else if (state.running && state.soundEnabled) {
+          _startGameplayMusic();
+        }
+      }
+      if (_gpSndToggle) _gpSndToggle.addEventListener('click', _handleGpSndToggle);
+      if (_gpSndToggleMl) _gpSndToggleMl.addEventListener('click', _handleGpSndToggle);
       ui.inviteFriendsBtn.addEventListener('click', inviteFriends);
       ui.copyLinkBtn.addEventListener('click', copyLink);
       // Referral dashboard: Claim All button
@@ -8423,7 +8448,7 @@
       var _gameplayMusicGain = null;     // dedicated GainNode for gameplay music volume
       var _gameplayMusicPlaying = false;
       var _gameplayMusicReady = false;
-      var _gameplayMusicVolume = 0.11;
+      var _gameplayMusicVolume = 0.07;
 
       function _ensureGameplayMusicGain() {
         var ctx = _ensureLobbyAudioCtx(); // reuse shared AudioContext
@@ -8455,6 +8480,7 @@
       function _startGameplayMusic() {
         if (!_gameplayMusicReady || !_gameplayMusicBuffer) return;
         if (!state.soundEnabled) return;
+        if (!state.gameplaySoundEnabled) return;
         if (_gameplayMusicPlaying) return; // prevent duplicates
         _ensureGameplayMusicGain();
         var ctx = audio.ctx;
