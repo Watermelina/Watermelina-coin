@@ -3614,6 +3614,245 @@
       100% { opacity: 0; transform: translateY(-48px) scale(0.9); }
     }
 
+    /* === Airdrop Tab — Watermelon League === */
+    #tabAirdrop {
+      padding: 16px 14px 100px;
+    }
+    .airdrop-hero {
+      position: relative;
+      background: linear-gradient(145deg, rgba(145,255,159,0.07), rgba(101,232,255,0.05), rgba(255,125,163,0.04));
+      border: 1px solid rgba(145,255,159,0.15);
+      border-radius: 24px;
+      padding: 28px 20px 24px;
+      text-align: center;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .airdrop-hero::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, rgba(145,255,159,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .airdrop-hero-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: var(--green);
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .airdrop-hero-title {
+      font-size: 26px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #91ff9f 0%, #65e8ff 50%, #ff7ca3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 18px;
+      letter-spacing: 0.5px;
+    }
+    .airdrop-wp-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .airdrop-wp-amount {
+      font-size: 42px;
+      font-weight: 900;
+      color: var(--cyan);
+      line-height: 1;
+      text-shadow: 0 0 24px rgba(101,232,255,0.25);
+    }
+    .airdrop-wp-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .airdrop-tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .airdrop-tier-badge .tier-emoji {
+      font-size: 18px;
+    }
+    .airdrop-status-msg {
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    /* Progress card */
+    .airdrop-progress-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 18px 16px;
+      margin-bottom: 14px;
+    }
+    .airdrop-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .airdrop-progress-tier {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .airdrop-progress-tier .current {
+      color: var(--green);
+    }
+    .airdrop-progress-tier .next {
+      color: var(--cyan);
+    }
+    .airdrop-progress-tier .arrow {
+      color: var(--muted);
+      margin: 0 6px;
+      font-size: 11px;
+    }
+    .airdrop-progress-wp-needed {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .airdrop-progress-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+      position: relative;
+    }
+    .airdrop-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #91ff9f, #65e8ff);
+      transition: width 0.6s ease;
+      box-shadow: 0 0 12px rgba(145,255,159,0.3);
+      min-width: 4px;
+    }
+    .airdrop-progress-pct {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    /* Ranking soft card */
+    .airdrop-rank-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .airdrop-rank-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255,214,102,0.12), rgba(255,125,163,0.08));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .airdrop-rank-info {
+      flex: 1;
+    }
+    .airdrop-rank-position {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--yellow);
+    }
+    .airdrop-rank-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Season card */
+    .airdrop-season-card {
+      background: linear-gradient(135deg, rgba(255,125,163,0.06), rgba(101,232,255,0.04));
+      border: 1px solid rgba(255,125,163,0.12);
+      border-radius: 18px;
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .airdrop-season-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--pink);
+      margin-bottom: 6px;
+    }
+    .airdrop-season-countdown {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .airdrop-season-hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Friends tease */
+    .airdrop-friends-tease {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .airdrop-friends-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .airdrop-friends-text {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .airdrop-friends-text strong {
+      color: var(--green);
+    }
+
+    @keyframes airdropGlow {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    .airdrop-hero-label {
+      animation: airdropGlow 3s ease-in-out infinite;
+    }
+
     /* === Referral List (Friends Tab) === */
     #tabFriends #referralDashboard {
       margin-top: 16px;
@@ -4301,18 +4540,74 @@
         </div>
       </div>
 
-      <!-- AIRDROP TAB (hidden) -->
-      <div class="tab-panel" id="tabAirdrop" style="display:none !important">
-        <div class="section" id="airdropScoreSection">
-          <div class="section-title">Airdrop Score</div>
-          <div class="section-row"><span>Total Points</span><strong id="airdropTotalPoints">—</strong></div>
-          <div class="section-row"><span>Referral Count</span><strong id="airdropReferralCount">—</strong></div>
-          <div class="section-row"><span>Streak Count</span><strong id="airdropStreakCount">—</strong></div>
-          <div class="section-row"><span>Airdrop Score</span><strong id="airdropScoreValue" style="color:var(--green)">—</strong></div>
-          <div class="section-row"><span>Watermelon Points</span><strong id="airdropWatermelonPoints" style="color:var(--cyan)">—</strong></div>
+      <!-- AIRDROP TAB — Watermelon League -->
+      <div class="tab-panel" id="tabAirdrop">
+        <!-- Hero card -->
+        <div class="airdrop-hero">
+          <div class="airdrop-hero-label">Season 1</div>
+          <div class="airdrop-hero-title">Watermelon League</div>
+          <div class="airdrop-wp-display">
+            <svg style="width:32px;height:32px;" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="wpAirdropGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#00f0ff"/>
+                  <stop offset="40%" stop-color="#0090ff"/>
+                  <stop offset="100%" stop-color="#4040ff"/>
+                </linearGradient>
+              </defs>
+              <polygon points="20,1 36,10 36,30 20,39 4,30 4,10" fill="url(#wpAirdropGrad)" stroke="rgba(0,240,255,0.8)" stroke-width="1.2"/>
+              <text x="20" y="23.5" text-anchor="middle" font-size="8.5" font-weight="900" fill="rgba(255,255,255,0.95)" font-family="system-ui, sans-serif" letter-spacing="1.5">WP</text>
+            </svg>
+            <span class="airdrop-wp-amount" id="airdropWpAmount">0</span>
+          </div>
+          <div class="airdrop-wp-label">Watermelon Points</div>
+          <div style="margin-top:14px;">
+            <div class="airdrop-tier-badge">
+              <span class="tier-emoji" id="airdropTierEmoji">🌱</span>
+              <span id="airdropTierName">Seedling</span>
+            </div>
+          </div>
+          <div class="airdrop-status-msg" id="airdropStatusMsg">Keep playing to grow your melon!</div>
         </div>
-        <div class="btns" style="padding:0">
-          <button class="secondary" id="walletBtn">Connect Wallet</button>
+
+        <!-- Progress to next tier -->
+        <div class="airdrop-progress-card">
+          <div class="airdrop-progress-header">
+            <div class="airdrop-progress-tier">
+              <span class="current" id="airdropCurrentTier">🌱 Seedling</span>
+              <span class="arrow">→</span>
+              <span class="next" id="airdropNextTier">🌿 Sprout</span>
+            </div>
+            <div class="airdrop-progress-wp-needed" id="airdropWpNeeded">500 WP to go</div>
+          </div>
+          <div class="airdrop-progress-track">
+            <div class="airdrop-progress-fill" id="airdropProgressFill" style="width:0%"></div>
+          </div>
+          <div class="airdrop-progress-pct" id="airdropProgressPct">0% to next tier</div>
+        </div>
+
+        <!-- Ranking -->
+        <div class="airdrop-rank-card">
+          <div class="airdrop-rank-icon">🏅</div>
+          <div class="airdrop-rank-info">
+            <div class="airdrop-rank-position" id="airdropRankPosition">—</div>
+            <div class="airdrop-rank-sub" id="airdropRankSub">Play more to climb the ranks</div>
+          </div>
+        </div>
+
+        <!-- Season countdown -->
+        <div class="airdrop-season-card">
+          <div class="airdrop-season-title">⏳ Season 1</div>
+          <div class="airdrop-season-countdown" id="airdropSeasonCountdown">— days remaining</div>
+          <div class="airdrop-season-hint">Final rewards depend on your Season 1 standing.<br>Keep stacking WP — bigger melons earn bigger future rewards.</div>
+        </div>
+
+        <!-- Friends tease -->
+        <div class="airdrop-friends-tease">
+          <div class="airdrop-friends-icon">👀</div>
+          <div class="airdrop-friends-text" id="airdropFriendsText">
+            Invite friends to boost your league standing.<br><strong>Referral bonuses count toward your tier!</strong>
+          </div>
         </div>
       </div>
 
@@ -4454,11 +4749,9 @@
     <button class="bottom-nav-btn" data-tab="tabFriends" id="navFriendsBtn">
       <span class="nav-icon">👥</span><span>Friends</span>
     </button>
-    <!-- Airdrop tab removed
     <button class="bottom-nav-btn" data-tab="tabAirdrop">
       <span class="nav-icon">🪂</span><span>Airdrop</span>
     </button>
-    -->
   </nav>
 
   
@@ -5543,7 +5836,7 @@
         if (mfcEl) mfcEl.textContent = Number(state.fartCoins || 0).toLocaleString();
         var mwpEl = document.getElementById('missionsModalWpAmount');
         if (mwpEl) mwpEl.textContent = Number(state.watermelonPoints || 0).toLocaleString();
-        ui.walletBtn.textContent = state.walletConnected ? 'Update Wallet' : 'Connect Wallet';
+        if (ui.walletBtn) ui.walletBtn.textContent = state.walletConnected ? 'Update Wallet' : 'Connect Wallet';
         ui.soundBtn.textContent = state.soundEnabled ? '\uD83D\uDD0A' : '\uD83D\uDD07';
         if (ui.soundBtnFloat) ui.soundBtnFloat.textContent = state.soundEnabled ? '\uD83D\uDD0A' : '\uD83D\uDD07';
         renderLeaderboardRows(state.leaderboardRows);
@@ -8103,7 +8396,7 @@
       // Referral dashboard: Claim All button
       var _refClaimAllBtn = document.getElementById('refClaimAllBtn');
       if (_refClaimAllBtn) _refClaimAllBtn.addEventListener('click', handleClaimAll);
-      ui.walletBtn.addEventListener('click', async () => {
+      if (ui.walletBtn) ui.walletBtn.addEventListener('click', async () => {
         const walletAddress = prompt('Enter wallet address');
         if (!walletAddress) return;
         try {
@@ -9073,8 +9366,6 @@
     var panels = document.querySelectorAll('.tab-panel');
 
     function switchTab(tabId) {
-      // Airdrop tab removed — fallback to Home
-      if (tabId === 'tabAirdrop') tabId = 'tabHome';
       // Legacy: redirect old tabUpgrades to tabShop
       if (tabId === 'tabUpgrades') tabId = 'tabShop';
 
@@ -9111,6 +9402,13 @@
         } catch(e) {}
       }
 
+      // When switching to Airdrop tab, refresh airdrop data
+      if (tabId === 'tabAirdrop') {
+        try {
+          if (typeof window._wmRefreshAirdropTab === 'function') window._wmRefreshAirdropTab();
+        } catch(e) {}
+      }
+
       panels.forEach(function(p) {
         if (p.id === tabId) {
           p.classList.add('active');
@@ -9127,7 +9425,7 @@
       });
     }
 
-    var uiTapTabs = ['tabHome', 'tabShop', 'tabLeaderboard', 'tabFriends'];
+    var uiTapTabs = ['tabHome', 'tabShop', 'tabLeaderboard', 'tabFriends', 'tabAirdrop'];
     tabs.forEach(function(btn) {
       btn.addEventListener('click', function() {
         if (typeof window.haptic === 'function') window.haptic('tap');
@@ -10150,15 +10448,15 @@
     console.log("AIRDROP DATA:", data);
 
     if (data) {
-      document.getElementById("airdropTotalPoints").textContent =
-        Number(data.fart_coins || 0).toLocaleString();
+      var _atpEl = document.getElementById("airdropTotalPoints");
+      if (_atpEl) _atpEl.textContent = Number(data.fart_coins || 0).toLocaleString();
       // Use canonical referral_count from state (populated by loadReferralStatsDirect)
-      document.getElementById("airdropReferralCount").textContent =
-        state?.profile?.referral_count ?? 0;
-      document.getElementById("airdropStreakCount").textContent =
-        0;
-      document.getElementById("airdropScoreValue").textContent =
-        0;
+      var _arcEl = document.getElementById("airdropReferralCount");
+      if (_arcEl) _arcEl.textContent = state?.profile?.referral_count ?? 0;
+      var _ascEl = document.getElementById("airdropStreakCount");
+      if (_ascEl) _ascEl.textContent = 0;
+      var _asvEl = document.getElementById("airdropScoreValue");
+      if (_asvEl) _asvEl.textContent = 0;
       var awpEl = document.getElementById("airdropWatermelonPoints");
       if (awpEl) awpEl.textContent = Number(data.watermelon_points || 0).toLocaleString();
 
@@ -13855,6 +14153,119 @@ var STARTUP_TRACE = false;
   window.__diagLog = LOG;
   window.__diagFrames = FRAMES;
   window.__diagJump = function() { return firstJump; };
+})();
+</script>
+
+<script>
+// ===== Airdrop Tab — Watermelon League =====
+(function() {
+  var TIERS = [
+    { name: 'Seedling',        emoji: '🌱', min: 0 },
+    { name: 'Sprout',          emoji: '🌿', min: 500 },
+    { name: 'Watermelon',      emoji: '🍉', min: 2500 },
+    { name: 'Golden Melon',    emoji: '✨', min: 10000 },
+    { name: 'Legendary Melon', emoji: '👑', min: 50000 }
+  ];
+
+  var STATUS_MESSAGES = [
+    'Keep playing to grow your melon!',
+    'Your melon is sprouting nicely',
+    'Your melon is growing fast!',
+    'Keep stacking WP to evolve',
+    'Almost legendary status!',
+    'Bigger melons earn bigger future rewards'
+  ];
+
+  // Season 1 end date placeholder — wire to real value when available
+  var SEASON_END = new Date('2025-09-30T23:59:59Z');
+
+  function getTier(wp) {
+    var tier = TIERS[0];
+    for (var i = TIERS.length - 1; i >= 0; i--) {
+      if (wp >= TIERS[i].min) { tier = TIERS[i]; break; }
+    }
+    return { current: tier, currentIdx: TIERS.indexOf(tier) };
+  }
+
+  function getStatusMsg(tierIdx) {
+    return STATUS_MESSAGES[Math.min(tierIdx, STATUS_MESSAGES.length - 1)];
+  }
+
+  function refreshAirdrop() {
+    // Get WP from DOM display (kept in sync by game engine)
+    var wp = 0;
+    try {
+      var wpEl = document.getElementById('watermelonPointsDisplay');
+      if (wpEl) wp = Number(wpEl.textContent.replace(/,/g, '')) || 0;
+    } catch(e) {}
+
+    var tierInfo = getTier(wp);
+    var tier = tierInfo.current;
+    var idx = tierInfo.currentIdx;
+    var nextTier = idx < TIERS.length - 1 ? TIERS[idx + 1] : null;
+
+    // Hero section
+    var wpAmountEl = document.getElementById('airdropWpAmount');
+    if (wpAmountEl) wpAmountEl.textContent = wp.toLocaleString();
+
+    var tierEmojiEl = document.getElementById('airdropTierEmoji');
+    if (tierEmojiEl) tierEmojiEl.textContent = tier.emoji;
+
+    var tierNameEl = document.getElementById('airdropTierName');
+    if (tierNameEl) tierNameEl.textContent = tier.name;
+
+    var statusEl = document.getElementById('airdropStatusMsg');
+    if (statusEl) statusEl.textContent = getStatusMsg(idx);
+
+    // Progress bar
+    var currentTierEl = document.getElementById('airdropCurrentTier');
+    if (currentTierEl) currentTierEl.textContent = tier.emoji + ' ' + tier.name;
+
+    var nextTierEl = document.getElementById('airdropNextTier');
+    var wpNeededEl = document.getElementById('airdropWpNeeded');
+    var fillEl = document.getElementById('airdropProgressFill');
+    var pctEl = document.getElementById('airdropProgressPct');
+
+    if (nextTier) {
+      if (nextTierEl) nextTierEl.textContent = nextTier.emoji + ' ' + nextTier.name;
+      var rangeStart = tier.min;
+      var rangeEnd = nextTier.min;
+      var progress = Math.min(1, (wp - rangeStart) / (rangeEnd - rangeStart));
+      var pct = Math.round(progress * 100);
+      var remaining = rangeEnd - wp;
+      if (wpNeededEl) wpNeededEl.textContent = remaining.toLocaleString() + ' WP to go';
+      if (fillEl) fillEl.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '% to next tier';
+    } else {
+      if (nextTierEl) nextTierEl.textContent = '🏆 Max Tier';
+      if (wpNeededEl) wpNeededEl.textContent = 'You made it!';
+      if (fillEl) fillEl.style.width = '100%';
+      if (pctEl) pctEl.textContent = 'Maximum tier reached!';
+    }
+
+    // Ranking — placeholder (wire to real ranking API when available)
+    var rankPosEl = document.getElementById('airdropRankPosition');
+    var rankSubEl = document.getElementById('airdropRankSub');
+    if (wp > 0) {
+      if (rankPosEl) rankPosEl.textContent = tier.emoji + ' ' + tier.name;
+      if (rankSubEl) rankSubEl.textContent = 'Ranking updates coming soon';
+    }
+
+    // Season countdown
+    var countdownEl = document.getElementById('airdropSeasonCountdown');
+    if (countdownEl) {
+      var now = new Date();
+      var diff = SEASON_END - now;
+      if (diff > 0) {
+        var days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        countdownEl.textContent = days + ' days remaining';
+      } else {
+        countdownEl.textContent = 'Season ended';
+      }
+    }
+  }
+
+  window._wmRefreshAirdropTab = refreshAirdrop;
 })();
 </script>
 
