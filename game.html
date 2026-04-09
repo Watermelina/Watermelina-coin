@@ -3616,7 +3616,10 @@
 
     /* === Airdrop Tab — Watermelon League === */
     #tabAirdrop {
-      padding: 16px 14px 100px;
+      /* No extra padding — inherits sidebar side padding (14px) and
+         .tab-panel top inset (18px on Telegram) like all other tabs.
+         Bottom nav clearance comes from .sidebar mobile override. */
+      padding: 0;
     }
     .airdrop-hero {
       position: relative;
@@ -3626,6 +3629,7 @@
       padding: 28px 20px 24px;
       text-align: center;
       overflow: hidden;
+      margin-top: 10px;        /* Breathe below tab-panel top inset — matches other tabs' first-element offset */
       margin-bottom: 14px;
     }
     .airdrop-hero::before {
