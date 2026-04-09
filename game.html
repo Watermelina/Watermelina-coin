@@ -11099,73 +11099,43 @@
       }
     }
 
-    // --- Buy ---
+    // --- Buy (server-authoritative via /api/purchase-cosmetic) ---
     function buyItem(item) {
       var fc = getCurrentFc();
       if (fc < item.cost_fc) {
         if (typeof showToast === 'function') showToast('Not enough Fart Coins!', 'error');
         return;
       }
-      // Deduct FC via the same Supabase client
-      var client = window.supabaseClient || window.wmSupabaseClient;
       var userId = localStorage.getItem('wm_user_id');
-      if (!client || !userId) return;
+      if (!userId) return;
 
-      // Optimistic local update, then persist
-      client.rpc('deduct_fart_coins_cosmetic', { p_user_id: userId, p_amount: item.cost_fc })
-        .then(function(result) {
-          if (result.error) {
-            // Fallback: direct update
-            return client.from('users').select('fart_coins').eq('id', userId).single().then(function(r) {
-              if (r.data && r.data.fart_coins >= item.cost_fc) {
-                return client.from('users').update({ fart_coins: r.data.fart_coins - item.cost_fc }).eq('id', userId).then(function() {
-                  return { data: r.data.fart_coins - item.cost_fc };
-                });
-              } else {
-                if (typeof showToast === 'function') showToast('Not enough Fart Coins!', 'error');
-                return null;
-              }
-            });
+      fetch('/api/purchase-cosmetic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, item_id: item.id })
+      })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (!data.success) {
+            var msg = data.error === 'insufficient_fart_coins' ? 'Not enough Fart Coins!' : 'Purchase failed. Please try again.';
+            if (typeof showToast === 'function') showToast(msg, 'error');
+            return;
           }
-          return result;
-        })
-        .then(function(result) {
-          if (!result) return;
+          // Server confirmed purchase — update ownership
           cosmeticState.owned.push(item.id);
           saveCosmeticState(cosmeticState);
-          // Sync FC display
-          if (window._wmSyncCurrencies) {
-            client.from('users').select('fart_coins, watermelon_points').eq('id', userId).single().then(function(r) {
-              if (r.data) {
-                window._wmSyncCurrencies(r.data.fart_coins || 0, r.data.watermelon_points || 0);
-                var ufcEl = document.getElementById('upgradesFartCoins');
-                if (ufcEl) ufcEl.textContent = Number(r.data.fart_coins || 0).toLocaleString();
-              }
-            });
-          }
+          // Update FC display from server-returned balance
+          var newBalance = Number(data.remaining_fart_coins);
+          if (window._wmSyncCurrencies) window._wmSyncCurrencies(newBalance, null);
+          var ufcEl = document.getElementById('upgradesFartCoins');
+          if (ufcEl) ufcEl.textContent = newBalance.toLocaleString();
           renderCosmeticGrid();
           if (typeof showToast === 'function') showToast('Purchased ' + item.name + '!', 'success');
           if (window.haptic) window.haptic('purchase');
         })
         .catch(function(err) {
           console.error('Cosmetic purchase error:', err);
-          // Fallback: try simple deduction
-          client.from('users').select('fart_coins').eq('id', userId).single().then(function(r) {
-            if (r.data && r.data.fart_coins >= item.cost_fc) {
-              client.from('users').update({ fart_coins: r.data.fart_coins - item.cost_fc }).eq('id', userId).then(function() {
-                cosmeticState.owned.push(item.id);
-                saveCosmeticState(cosmeticState);
-                if (window._wmSyncCurrencies) window._wmSyncCurrencies(r.data.fart_coins - item.cost_fc, null);
-                var ufcEl = document.getElementById('upgradesFartCoins');
-                if (ufcEl) ufcEl.textContent = Number(r.data.fart_coins - item.cost_fc).toLocaleString();
-                renderCosmeticGrid();
-                if (typeof showToast === 'function') showToast('Purchased ' + item.name + '!', 'success');
-                if (window.haptic) window.haptic('purchase');
-              });
-            } else {
-              if (typeof showToast === 'function') showToast('Not enough Fart Coins!', 'error');
-            }
-          });
+          if (typeof showToast === 'function') showToast('Purchase failed. Please try again.', 'error');
         });
     }
 
