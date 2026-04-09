@@ -4595,7 +4595,7 @@
           <div class="airdrop-rank-icon">🏅</div>
           <div class="airdrop-rank-info">
             <div class="airdrop-rank-position" id="airdropRankPosition">—</div>
-            <div class="airdrop-rank-sub" id="airdropRankSub">Play more to climb the ranks</div>
+            <div class="airdrop-rank-sub" id="airdropRankSub">Keep growing to climb higher 🍉</div>
           </div>
         </div>
 
@@ -14185,6 +14185,61 @@ var STARTUP_TRACE = false;
   var SEASON_DURATION_DAYS = 60;
   var SEASON_END = new Date(SEASON_1_START.getTime() + SEASON_DURATION_DAYS * 24 * 60 * 60 * 1000);
 
+  var _airdropRankCache = null;
+  var _airdropRankCacheTime = 0;
+  var RANK_CACHE_TTL = 60000; // 60 seconds
+
+  function fetchAirdropRank() {
+    var userId = localStorage.getItem('wm_user_id');
+    if (!userId) return;
+
+    var rankPosEl = document.getElementById('airdropRankPosition');
+    var rankSubEl = document.getElementById('airdropRankSub');
+
+    // Use cached result if fresh enough
+    var now = Date.now();
+    if (_airdropRankCache && (now - _airdropRankCacheTime) < RANK_CACHE_TTL) {
+      applyRankData(_airdropRankCache, rankPosEl, rankSubEl);
+      return;
+    }
+
+    // Show loading state briefly
+    if (rankPosEl) rankPosEl.textContent = '⏳';
+    if (rankSubEl) rankSubEl.textContent = 'Loading rank…';
+
+    fetch('/.netlify/functions/get-airdrop-rank?user_id=' + encodeURIComponent(userId))
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        _airdropRankCache = data;
+        _airdropRankCacheTime = Date.now();
+        applyRankData(data, rankPosEl, rankSubEl);
+      })
+      .catch(function() {
+        // Fallback — don't break UI
+        if (rankPosEl) rankPosEl.textContent = '🏅';
+        if (rankSubEl) rankSubEl.textContent = 'Keep growing to climb higher 🍉';
+      });
+  }
+
+  function applyRankData(data, rankPosEl, rankSubEl) {
+    if (!data || data.rank == null) {
+      if (rankPosEl) rankPosEl.textContent = '🏅';
+      if (rankSubEl) rankSubEl.textContent = 'Keep growing to climb higher 🍉';
+      return;
+    }
+    var pct = data.percentile;
+    var label;
+    if (pct <= 1)       label = 'Top 1%';
+    else if (pct <= 5)  label = 'Top 5%';
+    else if (pct <= 10) label = 'Top 10%';
+    else if (pct <= 25) label = 'Top 25%';
+    else if (pct <= 50) label = 'Top 50%';
+    else                label = 'Top ' + pct + '%';
+
+    if (rankPosEl) rankPosEl.textContent = '🏅 ' + label;
+    if (rankSubEl) rankSubEl.textContent = 'Rank #' + data.rank.toLocaleString() + ' of ' + data.total.toLocaleString();
+  }
+
   function getTier(wp) {
     var tier = TIERS[0];
     for (var i = TIERS.length - 1; i >= 0; i--) {
@@ -14249,13 +14304,10 @@ var STARTUP_TRACE = false;
       if (pctEl) pctEl.textContent = 'Legendary status achieved!';
     }
 
-    // Ranking — placeholder (wire to real ranking API when available)
+    // Ranking — fetch real data from airdrop_scores (all users)
     var rankPosEl = document.getElementById('airdropRankPosition');
     var rankSubEl = document.getElementById('airdropRankSub');
-    if (wp > 0) {
-      if (rankPosEl) rankPosEl.textContent = tier.emoji + ' ' + tier.name;
-      if (rankSubEl) rankSubEl.textContent = 'Ranking updates coming soon';
-    }
+    fetchAirdropRank();
 
     // Season countdown
     var countdownEl = document.getElementById('airdropSeasonCountdown');
