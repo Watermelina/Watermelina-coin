@@ -3399,20 +3399,27 @@
     .missions-modal-close:active {
       background: rgba(255, 255, 255, 0.18);
     }
-    .missions-fc-badge {
+    .missions-fc-badge, .missions-wp-badge {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      background: rgba(255, 200, 0, 0.10);
-      border: 1px solid rgba(255, 200, 0, 0.20);
       border-radius: 999px;
       padding: 3px 10px 3px 6px;
       font-size: 13px;
       font-weight: 800;
-      color: var(--yellow);
       line-height: 1;
     }
-    .missions-fc-badge .fc-mini-icon {
+    .missions-fc-badge {
+      background: rgba(255, 200, 0, 0.10);
+      border: 1px solid rgba(255, 200, 0, 0.20);
+      color: var(--yellow);
+    }
+    .missions-wp-badge {
+      background: rgba(0, 200, 255, 0.10);
+      border: 1px solid rgba(0, 200, 255, 0.20);
+      color: var(--cyan);
+    }
+    .missions-fc-badge .fc-mini-icon, .missions-wp-badge .wp-mini-icon {
       width: 16px;
       height: 16px;
       flex-shrink: 0;
@@ -4412,6 +4419,7 @@
       <div class="missions-modal-header">
         <span class="modal-title">🎯 Missions</span>
         <span class="missions-fc-badge" id="missionsModalFcDisplay"><svg class="fc-mini-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="fcMiniGradM" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="#ffe566"/><stop offset="50%" stop-color="#ffc800"/><stop offset="100%" stop-color="#b8860b"/></radialGradient></defs><circle cx="20" cy="20" r="18" fill="url(#fcMiniGradM)" stroke="#b8860b" stroke-width="1.5"/><circle cx="20" cy="20" r="14" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><text x="20" y="25" text-anchor="middle" font-size="13" font-weight="900" fill="#7a5100" font-family="system-ui,sans-serif" letter-spacing="0.5">FC</text></svg><span id="missionsModalFcAmount">0</span></span>
+        <span class="missions-wp-badge" id="missionsModalWpDisplay"><svg class="wp-mini-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="wpMiniGradM" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#65e8ff"/><stop offset="100%" stop-color="#00c8ff"/></linearGradient></defs><polygon points="20,4 36,20 20,36 4,20" fill="url(#wpMiniGradM)" stroke="rgba(200,250,255,0.6)" stroke-width="1.2"/><text x="20" y="24" text-anchor="middle" font-size="9" font-weight="900" fill="rgba(255,255,255,0.95)" font-family="system-ui,sans-serif" letter-spacing="1">WP</text></svg><span id="missionsModalWpAmount">0</span></span>
         <button class="missions-modal-close" id="missionsModalClose" type="button" aria-label="Close">✕</button>
       </div>
       <div id="missionsModalContent"></div>
@@ -4458,11 +4466,12 @@
     // --- Toast Notification Helper ---
     var _floatingRewardCount = 0;
     var _floatingRewardMax = 5;
-    function showFloatingReward(amount, anchorElement) {
+    function showFloatingReward(amount, anchorElement, currencyType) {
       if (_floatingRewardCount >= _floatingRewardMax) return;
+      var label = currencyType || 'FC';
       var el = document.createElement('div');
       el.className = 'floating-reward';
-      el.textContent = '+' + Number(amount).toLocaleString() + ' FC';
+      el.textContent = '+' + Number(amount).toLocaleString() + ' ' + label;
       document.body.appendChild(el);
       _floatingRewardCount++;
       // Position relative to anchor or fallback to center-top
@@ -5292,7 +5301,8 @@
           const targetValue = mission.target_value || mission.targetValue || 0;
           const progress = Math.min(mission.progress != null ? mission.progress : 0, targetValue);
           const rewardPoints = mission.rewardFC || mission.reward_points || mission.rewardPoints || 0;
-          const rewardText = '+' + rewardPoints + ' FC';
+          const rewardWP = mission.rewardWP || 0;
+          const rewardText = mission.rewardLabel || ((rewardWP > 0 && rewardPoints > 0) ? ('+' + rewardPoints + ' FC \u2022 +' + rewardWP + ' WP') : ('+' + rewardPoints + ' FC'));
           const completed = progress >= targetValue;
           const claimed = Boolean(mission.claimed) || Boolean(mission.claimed_at || mission.claimedAt);
           console.log('[MISSIONS] Renderer state — card ' + idx + ':', { title: mission.title, completed: completed, claimed: claimed, progress: progress, targetValue: targetValue });
@@ -5335,6 +5345,8 @@
                 if (state.missions && state.missions.length) renderMissionCards(state.missions);
                 var amt = mission.rewardFC || mission.rewardPoints || mission.reward_points;
                 if (amt) showFloatingReward(amt, claimAnchor);
+                var wpAmt = mission.rewardWP || 0;
+                if (wpAmt > 0) showFloatingReward(wpAmt, claimAnchor, 'WP');
               } else {
                 if (btn) { btn.textContent = 'CLAIM'; btn.disabled = false; }
                 el.onclick = handleDailyClaim;
@@ -5529,6 +5541,8 @@
         if (shopWpEl) shopWpEl.textContent = Number(state.watermelonPoints || 0).toLocaleString();
         var mfcEl = document.getElementById('missionsModalFcAmount');
         if (mfcEl) mfcEl.textContent = Number(state.fartCoins || 0).toLocaleString();
+        var mwpEl = document.getElementById('missionsModalWpAmount');
+        if (mwpEl) mwpEl.textContent = Number(state.watermelonPoints || 0).toLocaleString();
         ui.walletBtn.textContent = state.walletConnected ? 'Update Wallet' : 'Connect Wallet';
         ui.soundBtn.textContent = state.soundEnabled ? '\uD83D\uDD0A' : '\uD83D\uDD07';
         if (ui.soundBtnFloat) ui.soundBtnFloat.textContent = state.soundEnabled ? '\uD83D\uDD0A' : '\uD83D\uDD07';
@@ -7968,7 +7982,7 @@
                   targetValue: tv,
                   rewardFC: rfc,
                   rewardWP: rwp,
-                  rewardLabel: rfc > 0 ? ('+' + rfc + ' FC') : ('+' + rwp + ' WP'),
+                  rewardLabel: (rfc > 0 && rwp > 0) ? ('+' + rfc + ' FC \u2022 +' + rwp + ' WP') : (rfc > 0 ? ('+' + rfc + ' FC') : ('+' + rwp + ' WP')),
                   claimed: missionClaimed,
                   claimedAt: m.claimed_at || null
                 };
@@ -9230,6 +9244,11 @@
       var fcEl = document.getElementById('fartCoinsDisplay');
       var modalFcAmountEl = document.getElementById('missionsModalFcAmount');
       if (fcEl && modalFcAmountEl) modalFcAmountEl.textContent = fcEl.textContent;
+
+      // Sync WP display in modal header
+      var wpEl = document.getElementById('watermelonPointsDisplay');
+      var modalWpAmountEl = document.getElementById('missionsModalWpAmount');
+      if (wpEl && modalWpAmountEl) modalWpAmountEl.textContent = wpEl.textContent;
 
       // Move missions tab content into the modal
       content.innerHTML = '';
