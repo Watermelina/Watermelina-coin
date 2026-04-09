@@ -117,11 +117,11 @@ BEGIN
   -- Calculate cost for next level (Season 1 finalized pricing)
   v_cost := CASE v_upgrade.code
     WHEN 'seed_magnet' THEN
-      CASE v_current_level WHEN 0 THEN 120 WHEN 1 THEN 260 WHEN 2 THEN 520 ELSE 520 END
+      CASE v_current_level WHEN 0 THEN 400 WHEN 1 THEN 900 WHEN 2 THEN 1800 ELSE 1800 END
     WHEN 'combo_keeper' THEN
-      CASE v_current_level WHEN 0 THEN 220 WHEN 1 THEN 420 WHEN 2 THEN 850 ELSE 850 END
+      CASE v_current_level WHEN 0 THEN 600 WHEN 1 THEN 1300 WHEN 2 THEN 2600 ELSE 2600 END
     WHEN 'fart_coin_boost' THEN
-      CASE v_current_level WHEN 0 THEN 300 WHEN 1 THEN 500 WHEN 2 THEN 1100 ELSE 1100 END
+      CASE v_current_level WHEN 0 THEN 800 WHEN 1 THEN 1700 WHEN 2 THEN 3400 ELSE 3400 END
     ELSE
       CEIL(v_upgrade.base_cost * POWER(v_upgrade.cost_multiplier, v_current_level))
   END;

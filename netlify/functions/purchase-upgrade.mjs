@@ -5,9 +5,9 @@ import { createClient } from '@supabase/supabase-js';
 // Must match the client-side SEASON1_COSTS in game.html exactly.
 // Index 0 = cost to buy Level 1, index 1 = Level 2, etc.
 const SEASON1_PRICES = {
-  seed_magnet:     [120, 260, 520],
-  combo_keeper:    [220, 420, 850],
-  fart_coin_boost: [300, 500, 1100]
+  seed_magnet:     [400, 900, 1800],
+  combo_keeper:    [600, 1300, 2600],
+  fart_coin_boost: [800, 1700, 3400]
 };
 
 function getSeasonCost(upgradeCode, currentLevel) {
