@@ -4571,7 +4571,7 @@
               <span id="airdropTierName">Seedling</span>
             </div>
           </div>
-          <div class="airdrop-status-msg" id="airdropStatusMsg">Keep playing to grow your melon!</div>
+          <div class="airdrop-status-msg" id="airdropStatusMsg">Plant your seed — every WP counts! 🌱</div>
         </div>
 
         <!-- Progress to next tier -->
@@ -4582,12 +4582,12 @@
               <span class="arrow">→</span>
               <span class="next" id="airdropNextTier">🌿 Sprout</span>
             </div>
-            <div class="airdrop-progress-wp-needed" id="airdropWpNeeded">500 WP to go</div>
+            <div class="airdrop-progress-wp-needed" id="airdropWpNeeded">500 WP to reach 🌿 Sprout</div>
           </div>
           <div class="airdrop-progress-track">
             <div class="airdrop-progress-fill" id="airdropProgressFill" style="width:0%"></div>
           </div>
-          <div class="airdrop-progress-pct" id="airdropProgressPct">0% to next tier</div>
+          <div class="airdrop-progress-pct" id="airdropProgressPct">0% — keep stacking!</div>
         </div>
 
         <!-- Ranking -->
@@ -4601,8 +4601,8 @@
 
         <!-- Season countdown -->
         <div class="airdrop-season-card">
-          <div class="airdrop-season-title">⏳ Season 1</div>
-          <div class="airdrop-season-countdown" id="airdropSeasonCountdown">— days remaining</div>
+          <div class="airdrop-season-title" id="airdropSeasonTitle">⏳ Season 1</div>
+          <div class="airdrop-season-countdown" id="airdropSeasonCountdown">Ends in — days</div>
           <div class="airdrop-season-hint">Final rewards depend on your Season 1 standing.<br>Keep stacking WP — bigger melons earn bigger future rewards.</div>
         </div>
 
@@ -14172,16 +14172,18 @@ var STARTUP_TRACE = false;
   ];
 
   var STATUS_MESSAGES = [
-    'Keep playing to grow your melon!',
-    'Your melon is sprouting nicely',
-    'Your melon is growing fast!',
-    'Keep stacking WP to evolve',
-    'Almost legendary status!',
-    'Bigger melons earn bigger future rewards'
+    'Plant your seed — every WP counts! 🌱',
+    'Your melon is sprouting nicely 🌿',
+    'Growing strong — keep stacking! 🍉',
+    'Almost golden — don\'t stop now! ✨',
+    'Legend in the making! 👑',
+    'You are the melon lord 🍉👑'
   ];
 
-  // Season 1 end date placeholder — wire to real value when available
-  var SEASON_END = new Date('2025-09-30T23:59:59Z');
+  // Season 1: 60-day season starting April 10 2026, 9 PM Kuwait (UTC+3) = 18:00 UTC
+  var SEASON_1_START = new Date('2026-04-10T18:00:00Z');
+  var SEASON_DURATION_DAYS = 60;
+  var SEASON_END = new Date(SEASON_1_START.getTime() + SEASON_DURATION_DAYS * 24 * 60 * 60 * 1000);
 
   function getTier(wp) {
     var tier = TIERS[0];
@@ -14237,14 +14239,14 @@ var STARTUP_TRACE = false;
       var progress = Math.min(1, (wp - rangeStart) / (rangeEnd - rangeStart));
       var pct = Math.round(progress * 100);
       var remaining = rangeEnd - wp;
-      if (wpNeededEl) wpNeededEl.textContent = remaining.toLocaleString() + ' WP to go';
+      if (wpNeededEl) wpNeededEl.textContent = remaining.toLocaleString() + ' WP to ' + (nextTier.name === 'Legendary Melon' ? 'evolve ' + nextTier.emoji : 'reach ' + nextTier.emoji + ' ' + nextTier.name);
       if (fillEl) fillEl.style.width = pct + '%';
-      if (pctEl) pctEl.textContent = pct + '% to next tier';
+      if (pctEl) pctEl.textContent = pct + '% — keep stacking!';
     } else {
       if (nextTierEl) nextTierEl.textContent = '🏆 Max Tier';
-      if (wpNeededEl) wpNeededEl.textContent = 'You made it!';
+      if (wpNeededEl) wpNeededEl.textContent = 'You made it! 👑';
       if (fillEl) fillEl.style.width = '100%';
-      if (pctEl) pctEl.textContent = 'Maximum tier reached!';
+      if (pctEl) pctEl.textContent = 'Legendary status achieved!';
     }
 
     // Ranking — placeholder (wire to real ranking API when available)
@@ -14257,14 +14259,29 @@ var STARTUP_TRACE = false;
 
     // Season countdown
     var countdownEl = document.getElementById('airdropSeasonCountdown');
+    var seasonTitleEl = document.getElementById('airdropSeasonTitle');
     if (countdownEl) {
       var now = new Date();
-      var diff = SEASON_END - now;
-      if (diff > 0) {
-        var days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        countdownEl.textContent = days + ' days remaining';
+      var startDiff = SEASON_1_START - now;
+      var endDiff = SEASON_END - now;
+      if (startDiff > 0) {
+        // Season hasn't started yet — show launch countdown
+        var hrs = Math.floor(startDiff / (1000 * 60 * 60));
+        var mins = Math.floor((startDiff % (1000 * 60 * 60)) / (1000 * 60));
+        if (hrs >= 24) {
+          var days = Math.ceil(startDiff / (1000 * 60 * 60 * 24));
+          countdownEl.textContent = 'Launches in ' + days + ' day' + (days !== 1 ? 's' : '');
+        } else {
+          countdownEl.textContent = 'Launches in ' + hrs + 'h ' + mins + 'm';
+        }
+        if (seasonTitleEl) seasonTitleEl.textContent = '🚀 Season 1';
+      } else if (endDiff > 0) {
+        var days = Math.ceil(endDiff / (1000 * 60 * 60 * 24));
+        countdownEl.textContent = 'Ends in ' + days + ' day' + (days !== 1 ? 's' : '');
+        if (seasonTitleEl) seasonTitleEl.textContent = '⏳ Season 1';
       } else {
-        countdownEl.textContent = 'Season ended';
+        countdownEl.textContent = 'Season ended — rewards incoming!';
+        if (seasonTitleEl) seasonTitleEl.textContent = '🏁 Season 1 Complete';
       }
     }
   }
