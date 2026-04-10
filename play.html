@@ -38,6 +38,7 @@
   .qr-wrapper img {
     display: block;
     border-radius: 8px;
+    object-fit: contain;
   }
   .bot-handle {
     color: var(--accent);
@@ -76,10 +77,24 @@
   .is-mobile .mobile-only { display: block; }
   .is-desktop .desktop-only { display: block; }
 
-  /* QR sizing: responsive via clamp, works on all screen sizes */
-  .qr-wrapper img {
+  /* QR sizing: responsive via clamp for desktop */
+  .is-desktop .qr-wrapper img {
     width: clamp(140px, 28vw, 220px);
     height: clamp(140px, 28vw, 220px);
+  }
+
+  /* Mobile: fixed square size for pixel-perfect rendering on Safari */
+  .is-mobile .qr-wrapper {
+    width: 216px;   /* 180px image + 2×18px padding */
+    height: 216px;
+    box-sizing: border-box;
+    aspect-ratio: 1 / 1;
+  }
+  .is-mobile .qr-wrapper img {
+    width: 180px;
+    height: 180px;
+    image-rendering: -webkit-optimize-contrast; /* Safari crisp rendering */
+    image-rendering: crisp-edges;
   }
 
   /* Mobile device: button above QR, slightly muted QR */
