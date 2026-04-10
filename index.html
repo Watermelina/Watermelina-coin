@@ -75,16 +75,8 @@
             <p>But legends do not end in jail. They become games, memes, and coins.<br>Now the mission is simple: fart, fly, dodge the fruit police, and escape.</p>
           </div>
         </div>
-        <div class="casefile-character">
-          <div class="character-fart-trail">
-            <div class="smoke-puff smoke-puff-1"></div>
-            <div class="smoke-puff smoke-puff-2"></div>
-            <div class="smoke-puff smoke-puff-3"></div>
-          </div>
-          <div class="character-wrapper">
-            <img src="assets/watermelina-fart-homepage.png" alt="Watermelina" class="character-hero-img" />
-            <div class="fart-burst"></div>
-          </div>
+        <div class="hero-character">
+          <img src="/assets/watermelina_website_bg.png" alt="Watermelina" />
         </div>
       </div>
     </section>
@@ -281,15 +273,6 @@
 
     <div class="footer">Use the navigation above to open the mini game or the full links page.</div>
   </div>
-<script>
-  const character = document.querySelector('.character-wrapper');
-  const fart = document.querySelector('.fart-burst');
-  character.addEventListener('click', () => {
-    fart.classList.remove('active');
-    void fart.offsetWidth;
-    fart.classList.add('active');
-  });
-</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-init.js"></script>
 </body>
