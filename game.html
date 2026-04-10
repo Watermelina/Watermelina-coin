@@ -6475,8 +6475,9 @@
           state.lastRunFartCoins = estBoostedFc;
           state.lastRunFartCoinsBase = estFc;
           state.lastRunFartCoinsBonus = estBoostedFc - estFc;
-          // WP estimate: seeds act as a rough proxy; backend will correct
-          state.lastRunWatermelonPoints = seeds > 0 ? Math.ceil(seeds * 0.5) : 0;
+          // WP: exact backend formula so local value matches server
+          const maxCombo = state.runStats.maxCombo || 1;
+          state.lastRunWatermelonPoints = seeds > 0 ? Math.ceil((seeds * 0.5) + (maxCombo * 3) + (timeSurvived * 0.2)) : 0;
           state.rewardsReady = true;
         }
 
