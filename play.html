@@ -37,8 +37,6 @@
   }
   .qr-wrapper img {
     display: block;
-    width: 220px;
-    height: 220px;
     border-radius: 8px;
   }
   .bot-handle {
@@ -70,26 +68,28 @@
     margin-top: 8px;
   }
 
-  /* Desktop: show QR, hide button */
+  /* Device-type classes set by JS: .is-mobile / .is-desktop */
   .mobile-only { display: none; }
-  .desktop-only { display: block; }
+  .desktop-only { display: none; }
 
-  /* Mobile: show button, optionally show smaller QR */
-  @media (max-width: 768px) {
-    .mobile-only { display: block; }
-    .desktop-only-title { display: none; }
-    .qr-wrapper img {
-      width: 140px;
-      height: 140px;
-    }
-    .qr-section {
-      order: 2;
-      margin-top: 16px;
-      opacity: .8;
-    }
-    .play-container {
-      min-height: 60vh;
-    }
+  /* Show correct elements based on real device type */
+  .is-mobile .mobile-only { display: block; }
+  .is-desktop .desktop-only { display: block; }
+
+  /* QR sizing: responsive via clamp, works on all screen sizes */
+  .qr-wrapper img {
+    width: clamp(140px, 28vw, 220px);
+    height: clamp(140px, 28vw, 220px);
+  }
+
+  /* Mobile device: button above QR, slightly muted QR */
+  .is-mobile .qr-section {
+    order: 2;
+    margin-top: 16px;
+    opacity: .8;
+  }
+  .is-mobile .play-container {
+    min-height: 60vh;
   }
 </style>
 </head>
@@ -123,7 +123,7 @@
       <div class="qr-section">
         <div class="qr-wrapper">
           <img
-            src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Ft.me%2FWatermelinafart_bot"
+            src="https://api.qrserver.com/v1/create-qr-code/?size=440x440&data=https%3A%2F%2Ft.me%2FWatermelinafart_bot"
             alt="Scan to play Watermelina on Telegram"
           />
         </div>
@@ -137,5 +137,15 @@
       <a href="index.html" style="text-decoration:none;color:var(--muted)">← Back to homepage</a>
     </div>
   </div>
+<script>
+  // Detect real mobile devices via UA + touch support — not viewport width
+  (function() {
+    var ua = navigator.userAgent || '';
+    var isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|Opera Mini|IEMobile/i.test(ua)
+      || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua)); // iPad with desktop UA
+    document.getElementById('playContainer')
+      .classList.add(isMobile ? 'is-mobile' : 'is-desktop');
+  })();
+</script>
 </body>
 </html>
