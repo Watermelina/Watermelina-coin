@@ -636,15 +636,17 @@ canvas{
   .hero-character{order:-1;margin-bottom:4px}
   .hero-character img{width:260px}
   .fcwp-grid{grid-template-columns:1fr}
-  .journey-map{flex-direction:column;align-items:center;gap:0;max-width:340px;margin:0 auto}
+  .journey-map{flex-direction:column;align-items:center;gap:0;max-width:380px;margin:0 auto;padding:0 16px}
   .journey-map::before{
     top:0;bottom:0;left:50%;right:auto;
     width:3px;height:100%;
     transform:translateX(-50%);
-    background:linear-gradient(180deg,rgba(124,255,124,.25),rgba(255,210,77,.35),rgba(124,255,124,.25))
+    background:linear-gradient(180deg,rgba(124,255,124,.15),rgba(255,210,77,.22),rgba(124,255,124,.15));
+    opacity:.5;
+    z-index:0
   }
-  .journey-milestone{max-width:100%;width:100%;padding:16px 0}
-  .milestone-content{text-align:left;min-height:auto}
+  .journey-milestone{max-width:100%;width:100%;padding:20px 0;z-index:1}
+  .milestone-content{text-align:left;min-height:auto;background:rgba(18,12,30,.72);border:1px solid rgba(255,255,255,.1)}
 
   /* Mobile: darker overlay to reduce washed-out look */
   body::before{
@@ -670,6 +672,11 @@ canvas{
     z-index:2;
   }
 
+  /* Mobile: consistent horizontal padding */
+  .wrap{padding:18px 18px}
+  .section{padding-left:2px;padding-right:2px}
+  .referral-strip{margin-left:0;margin-right:0}
+
   /* Mobile: tighter hero spacing */
   .hero-headline{padding:36px 16px 20px}
   .hero-cta{
@@ -679,23 +686,34 @@ canvas{
   }
 
   /* Mobile: better card padding and spacing */
-  .card{padding:18px}
-  .casefile{padding:18px}
-  .fcwp-card{padding:20px}
-  .league-card{padding:20px}
-  .milestone-content{padding:16px 14px}
+  .card{padding:20px}
+  .casefile{padding:20px}
+  .fcwp-card{padding:22px}
+  .league-card{padding:22px}
+  .milestone-content{padding:18px 16px}
 
   /* Mobile: improved section spacing */
-  .section{margin-top:36px}
-  .casefile-headline{font-size:1.08rem;line-height:1.6}
-  .casefile-full p{font-size:1rem;line-height:1.6}
+  .section{margin-top:44px}
+  .fcwp-grid{gap:16px}
+  .league-grid{gap:16px}
+
+  /* Mobile: case file readability */
+  .casefile-headline{font-size:1.08rem;line-height:1.65}
+  .casefile-full p{font-size:1rem;line-height:1.7;max-width:540px}
+  .casefile-full{padding:0 4px}
+  .casefile-main{padding:20px 18px}
 
   /* Mobile: slightly stronger card backgrounds */
   .card{background:rgba(18,12,30,.62)}
   .fcwp-card{background:rgba(18,12,30,.58)}
   .league-card{background:rgba(18,12,30,.58)}
-  .milestone-content{background:rgba(18,12,30,.58)}
+  .milestone-content{background:rgba(18,12,30,.72)}
 
   /* Mobile: leaderboard entry readability */
   .lb-entry{padding:8px 12px;font-size:.9rem}
+
+  /* Mobile: nav button spacing */
+  .navlinks{gap:8px}
+  .navlinks a{padding:10px 16px;font-size:.92rem}
+  .nav{padding:10px 0 20px;gap:12px}
 }
