@@ -6856,6 +6856,16 @@
       var _epicBgReady = false;
       _epicBgImg.onload = function() { _epicBgReady = true; };
 
+      var _epicBgPreviewImg = new Image();
+      _epicBgPreviewImg.src = 'assets/epic_bg_preview.png';
+      var _epicBgPreviewReady = false;
+      _epicBgPreviewImg.onload = function() { _epicBgPreviewReady = true; };
+
+      var _epicBgDressingImg = new Image();
+      _epicBgDressingImg.src = 'assets/epic_bg_dressing_room.png';
+      var _epicBgDressingReady = false;
+      _epicBgDressingImg.onload = function() { _epicBgDressingReady = true; };
+
       // Gameplay: cover + centered (same pattern as rare)
       function drawEpicBg(c, w, h) {
         if (!_epicBgReady) {
@@ -6873,29 +6883,29 @@
         c.drawImage(_epicBgImg, dx, dy, drawW, drawH);
       }
 
-      // Preview / Dressing Room: cover with smart vertical framing
-      // Shows full composition — bottom bushes + top foliage, avoids "mostly sky"
-      function drawEpicBgPreview(c, w, h) {
-        if (!_epicBgReady) {
+      // Preview / Dressing Room: unified function with context (same pattern as rare/legendary)
+      function drawEpicBgPreview(c, w, h, context) {
+        var img, ready;
+        if (context === 'dressing') {
+          img = _epicBgDressingImg;
+          ready = _epicBgDressingReady;
+        } else {
+          img = _epicBgPreviewImg;
+          ready = _epicBgPreviewReady;
+        }
+        if (!ready) {
           c.fillStyle = '#4da3ff';
           c.fillRect(0, 0, w, h);
           return;
         }
-        var imgW = _epicBgImg.naturalWidth;
-        var imgH = _epicBgImg.naturalHeight;
+        var imgW = img.naturalWidth;
+        var imgH = img.naturalHeight;
         var scale = Math.max(w / imgW, h / imgH);
         var drawW = imgW * scale;
         var drawH = imgH * scale;
         var dx = (w - drawW) / 2;
-        // Default centered dy
-        var dyCentered = (h - drawH) / 2;
-        // Bottom-anchored dy (shows bottom of image)
-        var dyBottom = h - drawH;
-        // Blend: 70% toward bottom to show bushes, 30% centered to keep some top foliage
-        var dy = dyCentered * 0.3 + dyBottom * 0.7;
-        // Clamp so we never go below bottom anchor or above centered
-        dy = Math.max(dyBottom, Math.min(dyCentered, dy));
-        c.drawImage(_epicBgImg, dx, dy, drawW, drawH);
+        var dy = (h - drawH) / 2;
+        c.drawImage(img, dx, dy, drawW, drawH);
       }
 
       // --- Sunset Gold (Legendary background) — real image ---
@@ -11460,7 +11470,7 @@
         if (item.customDraw === 'city_night' && window.drawCityNightPreview) {
           window.drawCityNightPreview(ctx, w, h, 'shop');
         } else if (item.customDraw === 'sunny_day' && window.drawEpicBgPreview) {
-          window.drawEpicBgPreview(ctx, w, h);
+          window.drawEpicBgPreview(ctx, w, h, 'shop');
         } else if (item.customDraw === 'sunset_gold' && window.drawLegendaryBgPreview) {
           window.drawLegendaryBgPreview(ctx, w, h, 'shop');
         } else if (item.gradient) {
@@ -11672,7 +11682,7 @@
       if (bgCfg && bgCfg.customDraw === 'city_night' && window.drawCityNightPreview) {
         window.drawCityNightPreview(drCtx, w, h, 'dressing');
       } else if (bgCfg && bgCfg.customDraw === 'sunny_day' && window.drawEpicBgPreview) {
-        window.drawEpicBgPreview(drCtx, w, h);
+        window.drawEpicBgPreview(drCtx, w, h, 'dressing');
       } else if (bgCfg && bgCfg.customDraw === 'sunset_gold' && window.drawLegendaryBgPreview) {
         window.drawLegendaryBgPreview(drCtx, w, h, 'dressing');
       } else if (bgCfg && bgCfg.gradient) {
