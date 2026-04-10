@@ -8616,6 +8616,46 @@
       }
       window.playCoinReward = playCoinReward;
 
+      // === Upgrade Purchase Sound (WebAudio) ===
+      // Plays assets/upgrade_purchase.mp3 on successful upgrade purchases only.
+      // Uses WebAudio API (AudioBufferSourceNode) instead of HTMLAudioElement
+      // so it never appears in lock-screen media controls on mobile.
+      var _upgradePurchaseBuf = null;
+      var _upgradePurchaseReady = false;
+
+      (function _preloadUpgradePurchase() {
+        var a = window._wmAudio;
+        if (!a) return;
+        a._initCtx();
+        if (!a.ctx) return;
+        fetch('assets/upgrade_purchase.mp3')
+          .then(function(r) { return r.arrayBuffer(); })
+          .then(function(ab) { return a.ctx.decodeAudioData(ab); })
+          .then(function(decoded) {
+            _upgradePurchaseBuf = decoded;
+            _upgradePurchaseReady = true;
+          })
+          .catch(function() { _upgradePurchaseReady = false; });
+      })();
+
+      function playUpgradePurchase() {
+        if (window._wmAudio && !window._wmAudio.enabled) return;
+        if (!_upgradePurchaseReady || !_upgradePurchaseBuf) return;
+        var a = window._wmAudio;
+        if (!a || !a.ctx) return;
+        try {
+          if (a.ctx.state === 'suspended') { a.ctx.resume().catch(function(){}); return; }
+          var src = a.ctx.createBufferSource();
+          var gain = a.ctx.createGain();
+          src.buffer = _upgradePurchaseBuf;
+          gain.gain.value = 1.0;
+          src.connect(gain);
+          gain.connect(a.ctx.destination);
+          src.start(0);
+        } catch(e) { /* ignore */ }
+      }
+      window.playUpgradePurchase = playUpgradePurchase;
+
       // === Lobby Background Music (WebAudio) ===
       // Plays assets/lobby-music.mp3 on loop while in the homepage/lobby state.
       // Uses WebAudio API (AudioBufferSourceNode) instead of HTMLAudioElement
@@ -10690,6 +10730,7 @@
 
         if (data && data.success) {
           if (window.haptic) { window.haptic('purchase'); }
+          if (window.playUpgradePurchase) { window.playUpgradePurchase(); }
           var backendPrice = data.cost;
           fartCoins = data.remaining_fart_coins;
 
