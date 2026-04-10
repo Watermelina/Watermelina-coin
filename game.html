@@ -6537,7 +6537,8 @@
 
       function failRun() {
         // Extra Life disabled for Season 1 — player dies immediately on collision
-        // Gameplay music continues through death — only stops on exitPlayMode, app hide, or sound toggle off
+        // Stop gameplay music with a short fade-out so stats screen is silent
+        _stopGameplayMusic(200);
 
         state.running = false;
         state.gameOver = true;
@@ -8996,13 +8997,26 @@
         } catch(e) { /* ignore */ }
       }
 
-      function _stopGameplayMusic() {
+      function _stopGameplayMusic(fadeMs) {
         if (!_gameplayMusicPlaying || !_gameplayMusicSource) return;
-        try {
-          _gameplayMusicSource.stop();
-        } catch(e) { /* ignore */ }
+        var src = _gameplayMusicSource;
         _gameplayMusicSource = null;
         _gameplayMusicPlaying = false;
+        // Short fade-out if gain node exists and fadeMs requested
+        if (fadeMs && _gameplayMusicGain && audio.ctx && audio.ctx.state === 'running') {
+          try {
+            var now = audio.ctx.currentTime;
+            _gameplayMusicGain.gain.setValueAtTime(_gameplayMusicGain.gain.value, now);
+            _gameplayMusicGain.gain.linearRampToValueAtTime(0, now + fadeMs / 1000);
+            setTimeout(function() {
+              try { src.stop(); } catch(e) {}
+              // Restore gain for next play
+              if (_gameplayMusicGain) _gameplayMusicGain.gain.value = _gameplayMusicVolume;
+            }, fadeMs + 20);
+            return;
+          } catch(e) { /* fall through to hard stop */ }
+        }
+        try { src.stop(); } catch(e) { /* ignore */ }
       }
 
       // --- Music: stop on background / resume on foreground ---
