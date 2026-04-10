@@ -6286,8 +6286,6 @@
       }
 
       async function submitRunToSupabase() {
-        // Reset rewardsReady at start so overlay shows "Calculating rewards..."
-        state.rewardsReady = false;
         state.lastRunFartCoins = 0;
         state.lastRunFartCoinsBase = 0;
         state.lastRunFartCoinsBonus = 0;
@@ -6304,6 +6302,20 @@
         const seeds = state.seeds;
         const timeSurvived = state.lastRunTimeSurvived || 0;
         const avgCombo = state.comboSamples > 0 ? Math.round((state.comboSum / state.comboSamples) * 100) / 100 : 1;
+
+        // Instantly compute local reward estimates so stats popup appears without delay
+        {
+          const estFc = Math.ceil((seeds * avgCombo) + (timeSurvived * 0.5));
+          const fcbLevel = state.upgradeEffects.fart_coin_boost || 0;
+          const fcMult = getFartCoinBoostMult(fcbLevel);
+          const estBoostedFc = Math.ceil(estFc * fcMult);
+          state.lastRunFartCoins = estBoostedFc;
+          state.lastRunFartCoinsBase = estFc;
+          state.lastRunFartCoinsBonus = estBoostedFc - estFc;
+          // WP estimate: seeds act as a rough proxy; backend will correct
+          state.lastRunWatermelonPoints = seeds > 0 ? Math.ceil(seeds * 0.5) : 0;
+          state.rewardsReady = true;
+        }
 
         try {
         // 1. Insert run record — isolated so failures don't block rewards
@@ -6497,8 +6509,7 @@
         }
 
         } finally {
-          // ALWAYS set rewardsReady to true so overlay stops showing "Calculating rewards..."
-          state.rewardsReady = true;
+          // rewardsReady was set true instantly; ensure save/sidebar reflect final backend values
           saveLocal();
           updateSidebar();
 
