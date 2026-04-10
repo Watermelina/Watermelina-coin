@@ -6747,6 +6747,16 @@
       var _rareBgReady = false;
       _rareBgImg.onload = function() { _rareBgReady = true; };
 
+      var _rareBgPreviewImg = new Image();
+      _rareBgPreviewImg.src = 'assets/rare_bg_preview.png';
+      var _rareBgPreviewReady = false;
+      _rareBgPreviewImg.onload = function() { _rareBgPreviewReady = true; };
+
+      var _rareBgDressingImg = new Image();
+      _rareBgDressingImg.src = 'assets/rare_bg_dressing_room.png';
+      var _rareBgDressingReady = false;
+      _rareBgDressingImg.onload = function() { _rareBgDressingReady = true; };
+
       function drawCityNight(c, w, h) {
         if (!_rareBgReady) {
           // Fallback solid colour while image loads
@@ -6813,6 +6823,32 @@
         c.drawImage(_rareBgImg, dx, dy, drawW, drawH);
       }
       window.drawCityNightContain = drawCityNightContain;
+
+      // Preview / Dressing Room: uses separate optimised assets per context
+      function drawCityNightPreview(c, w, h, context) {
+        var img, ready;
+        if (context === 'dressing') {
+          img = _rareBgDressingImg;
+          ready = _rareBgDressingReady;
+        } else {
+          img = _rareBgPreviewImg;
+          ready = _rareBgPreviewReady;
+        }
+        if (!ready) {
+          c.fillStyle = '#0a0e1a';
+          c.fillRect(0, 0, w, h);
+          return;
+        }
+        var imgW = img.naturalWidth;
+        var imgH = img.naturalHeight;
+        var scale = Math.max(w / imgW, h / imgH);
+        var drawW = imgW * scale;
+        var drawH = imgH * scale;
+        var dx = (w - drawW) / 2;
+        var dy = (h - drawH) / 2;
+        c.drawImage(img, dx, dy, drawW, drawH);
+      }
+      window.drawCityNightPreview = drawCityNightPreview;
 
       // --- Sunny Fields / Epic background — real image ---
       var _epicBgImg = new Image();
@@ -11421,8 +11457,8 @@
           ctx.restore();
         }
       } else if (item.type === 'background') {
-        if (item.customDraw === 'city_night' && window.drawCityNight) {
-          window.drawCityNight(ctx, w, h);
+        if (item.customDraw === 'city_night' && window.drawCityNightPreview) {
+          window.drawCityNightPreview(ctx, w, h, 'shop');
         } else if (item.customDraw === 'sunny_day' && window.drawEpicBgPreview) {
           window.drawEpicBgPreview(ctx, w, h);
         } else if (item.customDraw === 'sunset_gold' && window.drawLegendaryBgPreview) {
@@ -11633,8 +11669,8 @@
 
       // Draw background
       var bgCfg = getActiveConfig('background');
-      if (bgCfg && bgCfg.customDraw === 'city_night' && window.drawCityNightDressingRoom) {
-        window.drawCityNightDressingRoom(drCtx, w, h);
+      if (bgCfg && bgCfg.customDraw === 'city_night' && window.drawCityNightPreview) {
+        window.drawCityNightPreview(drCtx, w, h, 'dressing');
       } else if (bgCfg && bgCfg.customDraw === 'sunny_day' && window.drawEpicBgPreview) {
         window.drawEpicBgPreview(drCtx, w, h);
       } else if (bgCfg && bgCfg.customDraw === 'sunset_gold' && window.drawLegendaryBgPreview) {
