@@ -8450,8 +8450,8 @@
           : 'https://t.me/watermelinafart_bot';
         const message = `🚀 Join WatermelinaFart and earn FREE Fart Coins!\n\n🎁 Use my code to get a bonus:\n${link}`;
         const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(message)}`;
-        if (window.Telegram && Telegram.WebApp && typeof Telegram.WebApp.openLink === 'function') {
-          Telegram.WebApp.openLink(url);
+        if (window.Telegram?.WebApp?.openTelegramLink) {
+          Telegram.WebApp.openTelegramLink(url);
         } else {
           window.open(url, '_blank');
         }
@@ -10507,8 +10507,11 @@
         // Open external link (Telegram-safe)
         const url = SOCIAL_MISSION_URLS[mission.code];
         if (url) {
-          if (window.Telegram && Telegram.WebApp && typeof Telegram.WebApp.openLink === 'function') {
-            Telegram.WebApp.openLink(url);
+          const tgApp = window.Telegram?.WebApp;
+          if (tgApp?.openTelegramLink && url.startsWith('https://t.me/')) {
+            tgApp.openTelegramLink(url);
+          } else if (tgApp?.openLink) {
+            tgApp.openLink(url);
           } else {
             window.open(url, '_blank');
           }
