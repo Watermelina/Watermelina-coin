@@ -29,9 +29,9 @@ body::before{
   inset:0;
   background:radial-gradient(
     circle at center,
-    rgba(0,0,0,0.15) 0%,
-    rgba(0,0,0,0.35) 60%,
-    rgba(0,0,0,0.65) 100%
+    rgba(0,0,0,0.18) 0%,
+    rgba(0,0,0,0.38) 60%,
+    rgba(0,0,0,0.68) 100%
   );
   z-index:0;
   pointer-events:none;
@@ -301,12 +301,33 @@ canvas{
   letter-spacing:.02em;
 }
 .hero-cta:hover{
+  animation-play-state:paused;
   transform:translateY(-2px);
   box-shadow:0 0 30px rgba(124,255,124,.45),0 6px 20px rgba(0,0,0,.3);
 }
 .hero-cta:active{
   transform:translateY(1px);
   box-shadow:0 0 12px rgba(124,255,124,.25),0 2px 8px rgba(0,0,0,.2);
+}
+
+/* CTA wrapper and subtext */
+.cta-wrap{
+  display:inline-flex;flex-direction:column;align-items:center;
+}
+.cta-subtext{
+  display:block;margin-top:10px;
+  font-size:.82rem;font-weight:600;
+  color:rgba(255,255,255,.72);
+  letter-spacing:.02em;
+}
+
+/* CTA breathing pulse */
+@keyframes ctaPulse{
+  0%,100%{transform:scale(1);box-shadow:0 0 20px rgba(124,255,124,.3),0 4px 14px rgba(0,0,0,.25)}
+  50%{transform:scale(1.03);box-shadow:0 0 28px rgba(124,255,124,.45),0 6px 18px rgba(0,0,0,.28)}
+}
+.hero-cta{
+  animation:ctaPulse 2.6s ease-in-out infinite;
 }
 
 /* Case File */
@@ -613,7 +634,7 @@ canvas{
 @media (max-width:860px){
   .casefile-layout{grid-template-columns:1fr;text-align:center}
   .hero-character{order:-1;margin-bottom:4px}
-  .hero-character img{width:240px}
+  .hero-character img{width:260px}
   .fcwp-grid{grid-template-columns:1fr}
   .journey-map{flex-direction:column;align-items:center;gap:0;max-width:340px;margin:0 auto}
   .journey-map::before{
@@ -629,10 +650,24 @@ canvas{
   body::before{
     background:radial-gradient(
       circle at center,
-      rgba(0,0,0,.3) 0%,
-      rgba(0,0,0,.5) 50%,
-      rgba(0,0,0,.72) 100%
+      rgba(0,0,0,.32) 0%,
+      rgba(0,0,0,.52) 50%,
+      rgba(0,0,0,.75) 100%
     );
+  }
+
+  /* Mobile: subtle vignette for depth and focus */
+  body::after{
+    content:'';
+    position:fixed;inset:0;
+    background:radial-gradient(
+      ellipse 70% 70% at center,
+      transparent 50%,
+      rgba(0,0,0,.22) 85%,
+      rgba(0,0,0,.38) 100%
+    );
+    pointer-events:none;
+    z-index:2;
   }
 
   /* Mobile: tighter hero spacing */
