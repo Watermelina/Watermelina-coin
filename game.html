@@ -4047,9 +4047,73 @@
       line-height: 1.6;
     }
 
+    /* ===== MOBILE-ONLY GATE / QR SCREEN ===== */
+    .wm-gate-qr {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(180deg, #26132d 0%, #130916 100%);
+      color: #fff7ff; text-align: center;
+      font-family: Inter, system-ui, Arial, sans-serif;
+    }
+    .wm-gate-qr__title {
+      font-size: 1.5rem; font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+    .wm-gate-qr__img {
+      width: 220px; height: 220px;
+      border-radius: 16px; background: #fff; padding: 12px;
+    }
+    .wm-gate-qr__bot {
+      margin-top: 1.25rem; font-size: 1rem;
+      color: #ccbcd9;
+    }
+    body.wm-gate-blocked > *:not(.wm-gate-qr) {
+      display: none !important;
+    }
+
   </style>
 </head>
 <body>
+  <!-- ===== MOBILE-ONLY GATE ===== -->
+  <script>
+    (function() {
+      var tg = window.Telegram?.WebApp;
+      var isTelegram = !!(tg && typeof tg.initData === 'string' && tg.initData.length > 0);
+      var isMobileTelegram = isTelegram && (
+        ['android', 'android_x', 'ios', 'ios_x'].indexOf(tg.platform) !== -1
+      );
+      var isDevBypass = new URLSearchParams(window.location.search).has('dev') &&
+                        new URLSearchParams(window.location.search).get('dev') === '1';
+
+      if (isMobileTelegram || isDevBypass) {
+        // Allowed — game loads normally
+        window.__wmGateBlocked = false;
+      } else {
+        // Blocked — prevent game from running
+        window.__wmGateBlocked = true;
+        document.addEventListener('DOMContentLoaded', function() {
+          document.body.classList.add('wm-gate-blocked');
+        });
+      }
+    })();
+  </script>
+
+  <!-- QR Gate Screen (hidden when game is allowed) -->
+  <div class="wm-gate-qr" id="wmGateQr" style="display:none;">
+    <div class="wm-gate-qr__title">Play on your mobile</div>
+    <img class="wm-gate-qr__img"
+         src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Ft.me%2FWatermelinafart_bot"
+         alt="QR code to @Watermelinafart_bot" />
+    <div class="wm-gate-qr__bot">@Watermelinafart_bot</div>
+  </div>
+  <script>
+    // Show QR screen immediately when blocked
+    if (window.__wmGateBlocked) {
+      document.getElementById('wmGateQr').style.display = '';
+    }
+  </script>
+
   <!-- Toast Notification -->
   <div class="toast-container" id="toastContainer"><div class="toast" id="toastEl"></div></div>
 
@@ -4858,6 +4922,9 @@
     captureReferralCode();
 
     (() => {
+      // Mobile-only gate — bail out of entire game IIFE when blocked
+      if (window.__wmGateBlocked) return;
+
       const CONFIG = {
         apiBase: window.WM_API_BASE || 'https://YOUR_DOMAIN.com/api',
         storageKey: 'watermelina_game_v3'

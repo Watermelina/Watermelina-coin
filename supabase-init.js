@@ -1,3 +1,8 @@
+// Mobile-only gate — skip Supabase init when game is blocked
+if (window.__wmGateBlocked) {
+  console.log('[WM Gate] Supabase init skipped — gate is active');
+} else {
+
 if (!window.wmSupabaseClient) {
   window.wmSupabaseClient = window.supabase.createClient(
     'https://tivqekyexiknxzbbrgun.supabase.co',
@@ -325,3 +330,5 @@ async function initUser() {
 })();
 
 window._wmInitUserPromise = initUser();
+
+} // end gate else
