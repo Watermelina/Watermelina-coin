@@ -6630,6 +6630,7 @@
 
         state.running = false;
         state.gameOver = true;
+        state.gameOverTime = Date.now();
         // Compute survival time in seconds
         state.lastRunTimeSurvived = Math.max(0, Math.round((Date.now() - state.runStartTime) / 1000));
         state.lastRunScore = Math.floor(state.score);
@@ -7982,6 +7983,10 @@
         if (e && e.cancelable) e.preventDefault();
         audio.warmup();
         // If not running, start or restart the run on tap/click
+        // 1-second tap protection after run ends to prevent accidental restarts
+        if (!state.running && state.gameOver && state.gameOverTime && (Date.now() - state.gameOverTime < 1000)) {
+          return;
+        }
         if (!state.running && !state._startingRun) {
           tryEnterFullscreen();
           startRun();
