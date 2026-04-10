@@ -6862,6 +6862,49 @@
         c.drawImage(_epicBgImg, dx, dy, drawW, drawH);
       }
 
+      // --- Sunset Gold (Legendary background) — real image ---
+      var _legendaryBgImg = new Image();
+      _legendaryBgImg.src = 'assets/legendary_bg.png';
+      var _legendaryBgReady = false;
+      _legendaryBgImg.onload = function() { _legendaryBgReady = true; };
+
+      // Gameplay: cover + centered
+      function drawLegendaryBg(c, w, h) {
+        if (!_legendaryBgReady) {
+          c.fillStyle = '#2a1500';
+          c.fillRect(0, 0, w, h);
+          return;
+        }
+        var imgW = _legendaryBgImg.naturalWidth;
+        var imgH = _legendaryBgImg.naturalHeight;
+        var scale = Math.max(w / imgW, h / imgH);
+        var drawW = imgW * scale;
+        var drawH = imgH * scale;
+        var dx = (w - drawW) / 2;
+        var dy = (h - drawH) / 2;
+        c.drawImage(_legendaryBgImg, dx, dy, drawW, drawH);
+      }
+
+      // Preview / Dressing Room: cover with smart vertical framing
+      function drawLegendaryBgPreview(c, w, h) {
+        if (!_legendaryBgReady) {
+          c.fillStyle = '#2a1500';
+          c.fillRect(0, 0, w, h);
+          return;
+        }
+        var imgW = _legendaryBgImg.naturalWidth;
+        var imgH = _legendaryBgImg.naturalHeight;
+        var scale = Math.max(w / imgW, h / imgH);
+        var drawW = imgW * scale;
+        var drawH = imgH * scale;
+        var dx = (w - drawW) / 2;
+        var dyCentered = (h - drawH) / 2;
+        var dyBottom = h - drawH;
+        var dy = dyCentered * 0.3 + dyBottom * 0.7;
+        dy = Math.max(dyBottom, Math.min(dyCentered, dy));
+        c.drawImage(_legendaryBgImg, dx, dy, drawW, drawH);
+      }
+
       // Keep drawSunnyDay as alias for backward compat
       function drawSunnyDay(c, w, h) {
         var t = Date.now() * 0.001; // seconds-based time for animations
@@ -7035,6 +7078,8 @@
       window.drawSunnyDay = drawSunnyDay;
       window.drawEpicBg = drawEpicBg;
       window.drawEpicBgPreview = drawEpicBgPreview;
+      window.drawLegendaryBg = drawLegendaryBg;
+      window.drawLegendaryBgPreview = drawLegendaryBgPreview;
 
       function drawBackground() {
         // Apply equipped background cosmetic
@@ -7047,6 +7092,9 @@
         } else if (bgCfg && bgCfg.customDraw === 'sunny_day') {
           if (sl) sl.style.display = 'none';
           drawEpicBg(ctx, canvas.width, canvas.height);
+        } else if (bgCfg && bgCfg.customDraw === 'sunset_gold') {
+          if (sl) sl.style.display = 'none';
+          drawLegendaryBg(ctx, canvas.width, canvas.height);
         } else if (bgCfg && bgCfg.gradient) {
           if (sl) sl.style.display = 'none';
           var grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -10940,7 +10988,7 @@
       { id: 'bg_basic',       type: 'background', rarity: 'basic',     name: 'Basic BG',       cost_fc: 0,    owned_by_default: true,  gradient: null },
       { id: 'bg_ocean',       type: 'background', rarity: 'rare',      name: 'Midnight City',  cost_fc: 2500,  owned_by_default: false, gradient: ['#0a0e1a', '#0d1526', '#111d30'], customDraw: 'city_night' },
       { id: 'bg_neon_night',  type: 'background', rarity: 'epic',      name: 'Sunny Fields',   cost_fc: 12000,  owned_by_default: false, gradient: ['#4da3ff', '#87ceeb', '#bfe9ff'], customDraw: 'sunny_day' },
-      { id: 'bg_sunset',      type: 'background', rarity: 'legendary', name: 'Sunset Gold',    cost_fc: 22000, owned_by_default: false, gradient: ['#2a1500', '#4a2800', '#6a3a00'] },
+      { id: 'bg_sunset',      type: 'background', rarity: 'legendary', name: 'Sunset Gold',    cost_fc: 22000, owned_by_default: false, gradient: ['#2a1500', '#4a2800', '#6a3a00'], customDraw: 'sunset_gold' },
       // FART TRAILS
       { id: 'trail_basic',    type: 'trail', rarity: 'basic',     name: 'Basic Trail',   cost_fc: 0,    owned_by_default: true,  trailColor: 'rgba(145,255,159,.3)',  burstColor: 'rgba(145,255,159,.65)', burstAlt: 'rgba(255,255,150,.55)' },
       { id: 'trail_ice',      type: 'trail', rarity: 'rare',      name: 'Ice Trail',     cost_fc: 2500,  owned_by_default: false, trailColor: 'rgba(101,232,255,.35)', burstColor: 'rgba(101,232,255,.65)', burstAlt: 'rgba(180,240,255,.55)' },
@@ -11359,6 +11407,8 @@
           window.drawCityNight(ctx, w, h);
         } else if (item.customDraw === 'sunny_day' && window.drawEpicBgPreview) {
           window.drawEpicBgPreview(ctx, w, h);
+        } else if (item.customDraw === 'sunset_gold' && window.drawLegendaryBgPreview) {
+          window.drawLegendaryBgPreview(ctx, w, h);
         } else if (item.gradient) {
           var grad = ctx.createLinearGradient(0, 0, 0, h);
           item.gradient.forEach(function(c, i) { grad.addColorStop(i / (item.gradient.length-1), c); });
@@ -11569,6 +11619,8 @@
         window.drawCityNightDressingRoom(drCtx, w, h);
       } else if (bgCfg && bgCfg.customDraw === 'sunny_day' && window.drawEpicBgPreview) {
         window.drawEpicBgPreview(drCtx, w, h);
+      } else if (bgCfg && bgCfg.customDraw === 'sunset_gold' && window.drawLegendaryBgPreview) {
+        window.drawLegendaryBgPreview(drCtx, w, h);
       } else if (bgCfg && bgCfg.gradient) {
         var grad = drCtx.createLinearGradient(0, 0, 0, h);
         bgCfg.gradient.forEach(function(c, i) { grad.addColorStop(i / (bgCfg.gradient.length-1), c); });
