@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Play Watermelina</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  .play-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    text-align: center;
+    padding: 32px 18px;
+  }
+  .play-title {
+    font-size: clamp(1.6rem, 5vw, 2.6rem);
+    font-weight: 900;
+    margin: 0 0 8px;
+    text-shadow:
+      0 0 10px rgba(124,255,124,.6),
+      0 0 20px rgba(124,255,124,.3);
+  }
+  .play-subtitle {
+    color: var(--muted);
+    font-size: 1.05rem;
+    margin: 0 0 32px;
+  }
+  .qr-wrapper {
+    background: #fff;
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 0 40px rgba(124,255,124,.18);
+    margin-bottom: 24px;
+  }
+  .qr-wrapper img {
+    display: block;
+    width: 220px;
+    height: 220px;
+    border-radius: 8px;
+  }
+  .bot-handle {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 1.15rem;
+    margin-bottom: 12px;
+  }
+  .play-telegram-btn {
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 900;
+    font-size: 1.2rem;
+    padding: 18px 36px;
+    border-radius: 18px;
+    background: var(--accent);
+    color: #111;
+    margin-bottom: 24px;
+    box-shadow: 0 0 30px rgba(124,255,124,.25);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .play-telegram-btn:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 40px rgba(124,255,124,.4);
+  }
+  .play-hint {
+    color: var(--muted);
+    font-size: .92rem;
+    margin-top: 8px;
+  }
+
+  /* Desktop: show QR, hide button */
+  .mobile-only { display: none; }
+  .desktop-only { display: block; }
+
+  /* Mobile: show button, optionally show smaller QR */
+  @media (max-width: 768px) {
+    .mobile-only { display: block; }
+    .desktop-only-title { display: none; }
+    .qr-wrapper img {
+      width: 140px;
+      height: 140px;
+    }
+    .qr-section {
+      order: 2;
+      margin-top: 16px;
+      opacity: .8;
+    }
+    .play-container {
+      min-height: 60vh;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <a class="brand" href="index.html">🍉 Watermelina</a>
+      <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="play.html">Play</a>
+        <a href="links.html">Official Links</a>
+      </div>
+    </div>
+
+    <div class="play-container" id="playContainer">
+      <!-- Desktop layout -->
+      <h1 class="play-title desktop-only-title">Play on your mobile</h1>
+      <!-- Mobile layout -->
+      <h1 class="play-title mobile-only">Play Watermelina</h1>
+
+      <p class="play-subtitle">Open the game in Telegram to start playing</p>
+
+      <!-- Mobile: prominent Telegram button -->
+      <div class="mobile-only">
+        <a class="play-telegram-btn" href="https://t.me/Watermelinafart_bot" target="_blank" rel="noopener">
+          🎮 Play Now in Telegram
+        </a>
+      </div>
+
+      <!-- QR code section (always shown, smaller on mobile) -->
+      <div class="qr-section">
+        <div class="qr-wrapper">
+          <img
+            src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Ft.me%2FWatermelinafart_bot"
+            alt="Scan to play Watermelina on Telegram"
+          />
+        </div>
+        <div class="bot-handle">@Watermelinafart_bot</div>
+      </div>
+
+      <p class="play-hint desktop-only">Scan the QR code with your phone to open the game in Telegram</p>
+    </div>
+
+    <div class="footer">
+      <a href="index.html" style="text-decoration:none;color:var(--muted)">← Back to homepage</a>
+    </div>
+  </div>
+</body>
+</html>
