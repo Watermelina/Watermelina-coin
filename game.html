@@ -6868,6 +6868,16 @@
       var _legendaryBgReady = false;
       _legendaryBgImg.onload = function() { _legendaryBgReady = true; };
 
+      var _legendaryBgPreviewImg = new Image();
+      _legendaryBgPreviewImg.src = 'assets/legendary_bg_preview.png';
+      var _legendaryBgPreviewReady = false;
+      _legendaryBgPreviewImg.onload = function() { _legendaryBgPreviewReady = true; };
+
+      var _legendaryBgDressingImg = new Image();
+      _legendaryBgDressingImg.src = 'assets/legendary_bg_dressing_room.png';
+      var _legendaryBgDressingReady = false;
+      _legendaryBgDressingImg.onload = function() { _legendaryBgDressingReady = true; };
+
       // Gameplay: cover + centered
       function drawLegendaryBg(c, w, h) {
         if (!_legendaryBgReady) {
@@ -6886,14 +6896,22 @@
       }
 
       // Preview / Dressing Room: cover with smart vertical framing
-      function drawLegendaryBgPreview(c, w, h) {
-        if (!_legendaryBgReady) {
+      function drawLegendaryBgPreview(c, w, h, context) {
+        var img, ready;
+        if (context === 'dressing') {
+          img = _legendaryBgDressingImg;
+          ready = _legendaryBgDressingReady;
+        } else {
+          img = _legendaryBgPreviewImg;
+          ready = _legendaryBgPreviewReady;
+        }
+        if (!ready) {
           c.fillStyle = '#2a1500';
           c.fillRect(0, 0, w, h);
           return;
         }
-        var imgW = _legendaryBgImg.naturalWidth;
-        var imgH = _legendaryBgImg.naturalHeight;
+        var imgW = img.naturalWidth;
+        var imgH = img.naturalHeight;
         var scale = Math.max(w / imgW, h / imgH);
         var drawW = imgW * scale;
         var drawH = imgH * scale;
@@ -6902,7 +6920,7 @@
         var dyBottom = h - drawH;
         var dy = dyCentered * 0.3 + dyBottom * 0.7;
         dy = Math.max(dyBottom, Math.min(dyCentered, dy));
-        c.drawImage(_legendaryBgImg, dx, dy, drawW, drawH);
+        c.drawImage(img, dx, dy, drawW, drawH);
       }
 
       // Keep drawSunnyDay as alias for backward compat
@@ -11408,7 +11426,7 @@
         } else if (item.customDraw === 'sunny_day' && window.drawEpicBgPreview) {
           window.drawEpicBgPreview(ctx, w, h);
         } else if (item.customDraw === 'sunset_gold' && window.drawLegendaryBgPreview) {
-          window.drawLegendaryBgPreview(ctx, w, h);
+          window.drawLegendaryBgPreview(ctx, w, h, 'shop');
         } else if (item.gradient) {
           var grad = ctx.createLinearGradient(0, 0, 0, h);
           item.gradient.forEach(function(c, i) { grad.addColorStop(i / (item.gradient.length-1), c); });
@@ -11620,7 +11638,7 @@
       } else if (bgCfg && bgCfg.customDraw === 'sunny_day' && window.drawEpicBgPreview) {
         window.drawEpicBgPreview(drCtx, w, h);
       } else if (bgCfg && bgCfg.customDraw === 'sunset_gold' && window.drawLegendaryBgPreview) {
-        window.drawLegendaryBgPreview(drCtx, w, h);
+        window.drawLegendaryBgPreview(drCtx, w, h, 'dressing');
       } else if (bgCfg && bgCfg.gradient) {
         var grad = drCtx.createLinearGradient(0, 0, 0, h);
         bgCfg.gradient.forEach(function(c, i) { grad.addColorStop(i / (bgCfg.gradient.length-1), c); });
