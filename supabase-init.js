@@ -310,7 +310,7 @@ async function initUser() {
               status: 'PENDING'
             });
 
-          if (referralError) {
+          if (referralError && referralError.code !== '23505') {
             console.error('Referral insert failed:', referralError);
           }
         }
