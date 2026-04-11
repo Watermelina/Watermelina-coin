@@ -4103,9 +4103,9 @@
   <div class="wm-gate-qr" id="wmGateQr" style="display:none;">
     <div class="wm-gate-qr__title">Play on your mobile</div>
     <img class="wm-gate-qr__img"
-         src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Ft.me%2FWatermelinafart_bot"
-         alt="QR code to @Watermelinafart_bot" />
-    <div class="wm-gate-qr__bot">@Watermelinafart_bot</div>
+         src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Ft.me%2FPlayWatermelinaBot"
+         alt="QR code to @PlayWatermelinaBot" />
+    <div class="wm-gate-qr__bot">@PlayWatermelinaBot</div>
   </div>
   <script>
     // Show QR screen immediately when blocked
@@ -5529,8 +5529,8 @@
 
       function getReferralLink() {
         const code = getUserReferralCode();
-        if (code) return `https://t.me/watermelinafart_bot?startapp=${code}`;
-        return 'https://t.me/watermelinafart_bot';
+        if (code) return `https://t.me/PlayWatermelinaBot?startapp=${code}`;
+        return 'https://t.me/PlayWatermelinaBot';
       }
       function getNormalizedReferralCount(count) {
         var normalized = Number(count);
@@ -6095,7 +6095,7 @@
         // Referrals section — read code from localStorage, show full link
         const code = localStorage.getItem('wm_my_ref_code') || getUserReferralCode() || null;
         ui.referralCode.textContent = code || '—';
-        const fullLink = code ? `https://t.me/watermelinafart_bot?startapp=${code}` : '—';
+        const fullLink = code ? `https://t.me/PlayWatermelinaBot?startapp=${code}` : '—';
         ui.referralLinkDisplay.textContent = fullLink;
         updateReferralOverview();
       }
@@ -8753,8 +8753,8 @@
         if (!state.profile) await syncProfileToUi();
         const code = getUserReferralCode();
         const link = code
-          ? `https://t.me/watermelinafart_bot?startapp=${code}`
-          : 'https://t.me/watermelinafart_bot';
+          ? `https://t.me/PlayWatermelinaBot?startapp=${code}`
+          : 'https://t.me/PlayWatermelinaBot';
         const message = `🚀 Join WatermelinaFart and earn FREE Fart Coins!\n\n🎁 Use my code to get a bonus:\n${link}`;
         const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(message)}`;
         if (window.Telegram?.WebApp?.openTelegramLink) {
@@ -10527,8 +10527,8 @@
   function shareCrewLink(username) {
     var code = localStorage.getItem('wm_my_ref_code') || '';
     var link = code
-      ? 'https://t.me/watermelinafart_bot?startapp=' + code
-      : 'https://t.me/watermelinafart_bot';
+      ? 'https://t.me/PlayWatermelinaBot?startapp=' + code
+      : 'https://t.me/PlayWatermelinaBot';
     var text = username
       ? '\uD83D\uDE80 Hey @' + username + ', join WatermelinaFart and earn FREE Fart Coins!\n\n\uD83C\uDF89 ' + link
       : '\uD83D\uDE80 Join WatermelinaFart and earn FREE Fart Coins!\n\n\uD83C\uDF89 ' + link;
@@ -10591,8 +10591,8 @@
     // ── Local referral link helper (getReferralLink is scoped in another IIFE) ──
     function getRefLink() {
       var code = localStorage.getItem('wm_my_ref_code') || null;
-      if (code) return 'https://t.me/watermelinafart_bot?startapp=' + code;
-      return 'https://t.me/watermelinafart_bot';
+      if (code) return 'https://t.me/PlayWatermelinaBot?startapp=' + code;
+      return 'https://t.me/PlayWatermelinaBot';
     }
 
     // ── External URLs for social/growth missions ──
