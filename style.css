@@ -41,101 +41,6 @@ body > *{
   z-index:1;
 }
 
-/* Ambient floating particles */
-.ambient-particles{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  z-index:0;
-  overflow:hidden;
-}
-.particle{
-  position:absolute;
-  width:6px;
-  height:6px;
-  background:radial-gradient(circle, rgba(124,255,124,.6), transparent 70%);
-  border-radius:50%;
-  filter:blur(2px);
-  opacity:.25;
-  animation:floatParticle linear infinite;
-}
-.particle:nth-child(1){left:5%;top:85%;animation-duration:42s;animation-delay:0s}
-.particle:nth-child(2){left:15%;top:70%;animation-duration:55s;animation-delay:-8s}
-.particle:nth-child(3){left:25%;top:90%;animation-duration:38s;animation-delay:-3s}
-.particle:nth-child(4){left:35%;top:65%;animation-duration:48s;animation-delay:-15s}
-.particle:nth-child(5){left:45%;top:80%;animation-duration:60s;animation-delay:-5s}
-.particle:nth-child(6){left:55%;top:75%;animation-duration:35s;animation-delay:-20s}
-.particle:nth-child(7){left:65%;top:88%;animation-duration:52s;animation-delay:-12s}
-.particle:nth-child(8){left:75%;top:60%;animation-duration:44s;animation-delay:-7s}
-.particle:nth-child(9){left:85%;top:82%;animation-duration:58s;animation-delay:-18s}
-.particle:nth-child(10){left:95%;top:72%;animation-duration:40s;animation-delay:-2s}
-.particle:nth-child(11){left:10%;top:50%;animation-duration:50s;animation-delay:-25s}
-.particle:nth-child(12){left:20%;top:95%;animation-duration:36s;animation-delay:-10s}
-.particle:nth-child(13){left:30%;top:55%;animation-duration:46s;animation-delay:-30s}
-.particle:nth-child(14){left:40%;top:78%;animation-duration:54s;animation-delay:-14s}
-.particle:nth-child(15){left:50%;top:92%;animation-duration:32s;animation-delay:-6s}
-.particle:nth-child(16){left:60%;top:68%;animation-duration:57s;animation-delay:-22s}
-.particle:nth-child(17){left:70%;top:84%;animation-duration:41s;animation-delay:-9s}
-.particle:nth-child(18){left:80%;top:58%;animation-duration:49s;animation-delay:-16s}
-.particle:nth-child(19){left:90%;top:76%;animation-duration:53s;animation-delay:-4s}
-.particle:nth-child(20){left:2%;top:62%;animation-duration:45s;animation-delay:-28s}
-
-@keyframes floatParticle{
-  0%{transform:translateY(0) translateX(0)}
-  50%{transform:translateY(-80px) translateX(40px)}
-  100%{transform:translateY(-160px) translateX(-20px)}
-}
-
-/* Smoke layer — atmospheric depth */
-.smoke-layer{
-  position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden
-}
-.smoke{
-  position:absolute;width:300px;height:300px;
-  background:radial-gradient(circle,rgba(124,255,124,.18),transparent 70%);
-  filter:blur(60px);opacity:.25;
-  animation:smokeDrift 35s ease-in-out infinite
-}
-.smoke:nth-child(1){left:5%;top:15%;animation-duration:35s;animation-delay:0s}
-.smoke:nth-child(2){left:70%;top:60%;animation-duration:42s;animation-delay:-8s}
-.smoke:nth-child(3){left:35%;top:75%;animation-duration:38s;animation-delay:-15s;width:250px;height:250px}
-.smoke:nth-child(4){left:85%;top:20%;animation-duration:30s;animation-delay:-5s;width:220px;height:220px;
-  background:radial-gradient(circle,rgba(255,210,77,.12),transparent 70%)}
-.smoke:nth-child(5){left:15%;top:50%;animation-duration:45s;animation-delay:-20s;width:280px;height:280px;
-  background:radial-gradient(circle,rgba(124,255,124,.14),transparent 70%)}
-
-@keyframes smokeDrift{
-  0%{transform:translate(0,0) scale(1)}
-  50%{transform:translate(60px,-80px) scale(1.2)}
-  100%{transform:translate(-40px,-160px) scale(1)}
-}
-
-/* Floating coins layer */
-.coin-layer{
-  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden
-}
-.coin{
-  position:absolute;width:48px;height:48px;opacity:.12;
-  animation:coinFloat linear infinite
-}
-.coin:nth-child(1){left:8%;top:90%;animation-duration:45s;animation-delay:0s;transform:scale(1)}
-.coin:nth-child(2){left:22%;top:85%;animation-duration:55s;animation-delay:-12s;transform:scale(0.85)}
-.coin:nth-child(3){left:40%;top:95%;animation-duration:38s;animation-delay:-5s;transform:scale(1.1)}
-.coin:nth-child(4){left:58%;top:88%;animation-duration:50s;animation-delay:-20s;transform:scale(0.9)}
-.coin:nth-child(5){left:72%;top:92%;animation-duration:42s;animation-delay:-8s;transform:scale(1.15)}
-.coin:nth-child(6){left:88%;top:80%;animation-duration:60s;animation-delay:-30s;transform:scale(0.8)}
-.coin:nth-child(7){left:50%;top:82%;animation-duration:35s;animation-delay:-18s;transform:scale(1.2)}
-
-@keyframes coinFloat{
-  0%{transform:translateY(0) rotate(0deg)}
-  50%{transform:translateY(-120px) rotate(90deg)}
-  100%{transform:translateY(-240px) rotate(180deg)}
-}
-
-@keyframes bgPulse{
-  0%,100%{filter:brightness(1)}
-  50%{filter:brightness(1.05)}
-}
 a{color:inherit}
 .wrap{max-width:1100px;margin:0 auto;padding:18px;position:relative;z-index:1}
 .nav{
@@ -155,21 +60,8 @@ a{color:inherit}
 }
 .hero h1{
   text-shadow:
-  0 0 10px rgba(124,255,124,.6),
-  0 0 20px rgba(124,255,124,.3);
-  animation: heroGlow 3s ease-in-out infinite alternate;
-}
-@keyframes heroGlow{
-  from{
-    text-shadow:
-    0 0 10px rgba(124,255,124,.5),
-    0 0 20px rgba(124,255,124,.2);
-  }
-  to{
-    text-shadow:
-    0 0 20px rgba(124,255,124,.9),
-    0 0 40px rgba(124,255,124,.4);
-  }
+  0 0 12px rgba(124,255,124,.55),
+  0 0 24px rgba(124,255,124,.25);
 }
 .badge{
   display:inline-block;padding:10px 14px;border-radius:999px;
@@ -820,4 +712,14 @@ canvas{
     text-align:center;
   }
   .footer{text-align:center}
+
+  /* Mobile: disable decorative animations for performance */
+  .hero-character img{animation:none}
+  .hero-cta{animation:none}
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion:reduce){
+  .hero-character img{animation:none}
+  .hero-cta{animation:none}
 }
