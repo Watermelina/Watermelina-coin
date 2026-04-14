@@ -131,6 +131,7 @@
       --green: #91ff9f;
       --pink: #ff7ca3;
       --yellow: #ffd666;
+      --wp-blue: #4da6ff;
       --cyan: #65e8ff;
       --danger: #ff5d73;
       --shadow: 0 12px 32px rgba(0,0,0,.3);
@@ -944,6 +945,14 @@
       color: var(--muted);
       text-shadow: none;
       font-size: 14px;
+    }
+    .wp-reward-text {
+      color: var(--wp-blue);
+      text-shadow: 0 0 6px rgba(77, 166, 255, 0.3);
+    }
+    .mission-reward.mission-reward-muted .wp-reward-text {
+      color: var(--muted);
+      text-shadow: none;
     }
     .mission-claim-btn {
       padding: 6px 18px;
@@ -3447,9 +3456,9 @@
       color: var(--yellow);
     }
     .missions-wp-badge {
-      background: rgba(0, 200, 255, 0.10);
-      border: 1px solid rgba(0, 200, 255, 0.20);
-      color: var(--cyan);
+      background: rgba(77, 166, 255, 0.10);
+      border: 1px solid rgba(77, 166, 255, 0.20);
+      color: var(--wp-blue);
     }
     .missions-fc-badge .fc-mini-icon, .missions-wp-badge .wp-mini-icon {
       width: 16px;
@@ -3644,6 +3653,25 @@
       15%  { opacity: 1; transform: translateY(-6px) scale(1); }
       70%  { opacity: 1; transform: translateY(-32px) scale(1); }
       100% { opacity: 0; transform: translateY(-48px) scale(0.9); }
+    }
+    .floating-reward-wp {
+      color: var(--wp-blue);
+      text-shadow: 0 0 8px rgba(77, 166, 255, 0.5), 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .floating-reward-combined {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 16px;
+    }
+    .floating-reward-combined .fr-fc {
+      color: var(--yellow);
+      text-shadow: 0 0 8px rgba(255, 210, 102, 0.45), 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .floating-reward-combined .fr-wp {
+      color: var(--wp-blue);
+      text-shadow: 0 0 8px rgba(77, 166, 255, 0.5), 0 1px 3px rgba(0,0,0,0.4);
     }
 
     /* === Airdrop Tab — Watermelon League === */
@@ -4864,11 +4892,40 @@
       if (_floatingRewardCount >= _floatingRewardMax) return;
       var label = currencyType || 'FC';
       var el = document.createElement('div');
-      el.className = 'floating-reward';
+      el.className = 'floating-reward' + (label === 'WP' ? ' floating-reward-wp' : '');
       el.textContent = '+' + Number(amount).toLocaleString() + ' ' + label;
       document.body.appendChild(el);
       _floatingRewardCount++;
       // Position relative to anchor or fallback to center-top
+      if (anchorElement && anchorElement.getBoundingClientRect) {
+        var rect = anchorElement.getBoundingClientRect();
+        el.style.left = (rect.left + rect.width / 2) + 'px';
+        el.style.top = (rect.top) + 'px';
+        el.style.transform = 'translateX(-50%)';
+      } else {
+        el.style.left = '50%';
+        el.style.top = '20%';
+        el.style.transform = 'translateX(-50%)';
+      }
+      setTimeout(function() {
+        if (el.parentNode) el.parentNode.removeChild(el);
+        _floatingRewardCount--;
+      }, 900);
+    }
+    function showCombinedFloatingReward(fcAmount, wpAmount, anchorElement) {
+      if (_floatingRewardCount >= _floatingRewardMax) return;
+      var el = document.createElement('div');
+      el.className = 'floating-reward floating-reward-combined';
+      var fcLine = document.createElement('span');
+      fcLine.className = 'fr-fc';
+      fcLine.textContent = '+' + Number(fcAmount).toLocaleString() + ' FC';
+      var wpLine = document.createElement('span');
+      wpLine.className = 'fr-wp';
+      wpLine.textContent = '+' + Number(wpAmount).toLocaleString() + ' WP';
+      el.appendChild(fcLine);
+      el.appendChild(wpLine);
+      document.body.appendChild(el);
+      _floatingRewardCount++;
       if (anchorElement && anchorElement.getBoundingClientRect) {
         var rect = anchorElement.getBoundingClientRect();
         el.style.left = (rect.left + rect.width / 2) + 'px';
@@ -5838,7 +5895,7 @@
           const progress = Math.min(mission.progress != null ? mission.progress : 0, targetValue);
           const rewardPoints = mission.rewardFC || mission.reward_points || mission.rewardPoints || 0;
           const rewardWP = mission.rewardWP || 0;
-          const rewardText = mission.rewardLabel || ((rewardWP > 0 && rewardPoints > 0) ? ('+' + rewardPoints + ' FC \u2022 +' + rewardWP + ' WP') : ('+' + rewardPoints + ' FC'));
+          const rewardText = mission.rewardLabel || ((rewardWP > 0 && rewardPoints > 0) ? ('+' + rewardPoints + ' FC \u2022 <span class="wp-reward-text">+' + rewardWP + ' WP</span>') : rewardWP > 0 ? '<span class="wp-reward-text">+' + rewardWP + ' WP</span>' : ('+' + rewardPoints + ' FC'));
           const completed = progress >= targetValue;
           const claimed = Boolean(mission.claimed) || Boolean(mission.claimed_at || mission.claimedAt);
           console.log('[MISSIONS] Renderer state — card ' + idx + ':', { title: mission.title, completed: completed, claimed: claimed, progress: progress, targetValue: targetValue });
@@ -5880,9 +5937,14 @@
                 if (window.playCoinReward) window.playCoinReward();
                 if (state.missions && state.missions.length) renderMissionCards(state.missions);
                 var amt = mission.rewardFC || mission.rewardPoints || mission.reward_points;
-                if (amt) showFloatingReward(amt, claimAnchor);
                 var wpAmt = mission.rewardWP || 0;
-                if (wpAmt > 0) showFloatingReward(wpAmt, claimAnchor, 'WP');
+                if (amt && wpAmt > 0) {
+                  showCombinedFloatingReward(amt, wpAmt, claimAnchor);
+                } else if (amt) {
+                  showFloatingReward(amt, claimAnchor);
+                } else if (wpAmt > 0) {
+                  showFloatingReward(wpAmt, claimAnchor, 'WP');
+                }
               } else {
                 if (btn) { btn.textContent = 'CLAIM'; btn.disabled = false; }
                 el.onclick = handleDailyClaim;
