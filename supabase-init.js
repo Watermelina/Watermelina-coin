@@ -295,24 +295,21 @@ async function initUser() {
       userId = data.id;
 
       if (referralCode) {
-        const { data: refUser } = await supabaseClient
-          .from('users')
-          .select('id')
-          .eq('referral_code', referralCode)
-          .maybeSingle();
-
-        if (refUser && refUser.id !== data.id) {
-          const { error: referralError } = await supabaseClient
-            .from('referrals')
-            .insert({
-              referrer_user_id: refUser.id,
+        try {
+          const resp = await fetch('/api/create-referral', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
               referred_user_id: data.id,
-              status: 'PENDING'
-            });
-
-          if (referralError && referralError.code !== '23505') {
-            console.error('Referral insert failed:', referralError);
+              referral_code: referralCode
+            })
+          });
+          const result = await resp.json();
+          if (!result.success) {
+            console.warn('Referral creation returned:', result.error || 'unknown');
           }
+        } catch (err) {
+          console.error('Referral creation request failed:', err.message);
         }
       }
     }
