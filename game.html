@@ -5071,7 +5071,6 @@
         activeFriends: document.getElementById('activeFriends'),
         referralIntroShare: document.getElementById('referralIntroShare'),
         referralIntroThreshold: document.getElementById('referralIntroThreshold'),
-        referralPoints: document.getElementById('referralPoints'),
         referralLinkDisplay: document.getElementById('referralLinkDisplay'),
         referralMission1: document.getElementById('referralMission1'),
         referralMission2: document.getElementById('referralMission2'),
@@ -5599,7 +5598,6 @@
       }
       function updateReferralOverview() {
         var referralCount = state.profile?.referral_count ?? state.profile?.referralCount ?? 0;
-        var referralPoints = state.profile?.referral_points ?? state.profile?.referralPoints ?? 0;
         var activeReferrals = getActiveReferralCount(referralCount);
         var sharePct = Math.round(REFERRAL_CONFIG.percentageRate * 100);
         if (ui.activeReferrals) ui.activeReferrals.textContent = activeReferrals;
@@ -5607,7 +5605,6 @@
         if (ui.referralShare) ui.referralShare.textContent = sharePct + '%';
         if (ui.referralIntroShare) ui.referralIntroShare.textContent = sharePct + '%';
         if (ui.referralIntroThreshold) ui.referralIntroThreshold.textContent = REFERRAL_CONFIG.activeRunThreshold + ' runs';
-        if (ui.referralPoints) ui.referralPoints.textContent = referralPoints;
       }
 
       const api = {
@@ -8230,7 +8227,7 @@
           // Load user profile and leaderboard directly from Supabase
           const [profileResp, leaderboardResp] = await Promise.all([
             fetch(
-              SUPABASE_URL + '/rest/v1/users?id=eq.' + encodeURIComponent(userId) + '&select=id,username,first_name,points_total,wallet_address,referral_code,referral_count,referral_points,fart_coins,watermelon_points',
+              SUPABASE_URL + '/rest/v1/users?id=eq.' + encodeURIComponent(userId) + '&select=id,username,first_name,points_total,wallet_address,referral_code,referral_count,fart_coins,watermelon_points',
               { headers }
             ),
             fetch(
@@ -8299,7 +8296,7 @@
 
       /**
        * Canonical referral-stats loader — direct REST fetch, no supabaseClient dependency.
-       * Reads wm_user_id from localStorage, fetches referral_count + referral_points
+       * Reads wm_user_id from localStorage, fetches referral_count
        * and claimed missions directly from the Supabase REST API, updates state, and
        * refreshes the Friends tab + Referral Missions UI in one shot.
        */
@@ -8314,7 +8311,7 @@
 
           const [statsResp, claimedResp] = await Promise.all([
             fetch(
-              SUPABASE_URL + '/rest/v1/users?id=eq.' + encodeURIComponent(userId) + '&select=id,referral_count,referral_points',
+              SUPABASE_URL + '/rest/v1/users?id=eq.' + encodeURIComponent(userId) + '&select=id,referral_count',
               { headers }
             ),
             fetch(
@@ -8330,7 +8327,6 @@
             if (row) {
               if (!state.profile) state.profile = {};
               state.profile.referral_count = Number(row.referral_count) || 0;
-              state.profile.referral_points = Number(row.referral_points) || 0;
             }
           } else {
             console.error('[REFERRAL-DIRECT] stats fetch failed', statsResp.status, await statsResp.text().catch(() => ''));
