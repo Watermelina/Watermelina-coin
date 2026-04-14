@@ -226,7 +226,6 @@ AS $$
 DECLARE
   v_referral RECORD;
   v_run_count INT;
-  v_reward_points INT := 500;
 BEGIN
   -- Find a PENDING referral where this user is the referred user
   SELECT * INTO v_referral
@@ -250,27 +249,15 @@ BEGIN
   -- Mark referral as completed
   UPDATE referrals SET status = 'COMPLETED' WHERE referrer_user_id = v_referral.referrer_user_id AND referred_user_id = p_user_id;
 
-  -- Reward the referrer: points only (no flat FC activation payout)
+  -- Increment referral_count only (no flat referral_points reward)
   UPDATE users
-  SET referral_points = COALESCE(referral_points, 0) + v_reward_points,
-      referral_count = COALESCE(referral_count, 0) + 1
+  SET referral_count = COALESCE(referral_count, 0) + 1
   WHERE id = v_referral.referrer_user_id;
-
-  -- Log referral reward in point_events
-  INSERT INTO point_events (user_id, event_type, points, metadata)
-  VALUES (
-    v_referral.referrer_user_id,
-    'referral_reward',
-    v_reward_points,
-    jsonb_build_object(
-      'referred_user_id', p_user_id::text
-    )
-  );
 
   RETURN jsonb_build_object(
     'rewarded', true,
     'referrer_id', v_referral.referrer_user_id,
-    'points_awarded', v_reward_points
+    'activated', true
   );
 END;
 $$;
