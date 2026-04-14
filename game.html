@@ -8774,7 +8774,7 @@
                   targetValue: tv,
                   rewardFC: rfc,
                   rewardWP: rwp,
-                  rewardLabel: (rfc > 0 && rwp > 0) ? ('+' + rfc + ' FC \u2022 +' + rwp + ' WP') : (rfc > 0 ? ('+' + rfc + ' FC') : ('+' + rwp + ' WP')),
+                  rewardLabel: (rfc > 0 && rwp > 0) ? ('+' + rfc + ' FC \u2022 <span class="wp-reward-text">+' + rwp + ' WP</span>') : (rfc > 0 ? ('+' + rfc + ' FC') : ('<span class="wp-reward-text">+' + rwp + ' WP</span>')),
                   claimed: missionClaimed,
                   claimedAt: m.claimed_at || null
                 };
