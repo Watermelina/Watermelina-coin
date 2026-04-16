@@ -6877,6 +6877,16 @@
         return dist(p.x, p.y, nx, ny) <= nearR;
       }
 
+      function compactInPlace(arr, keepFn) {
+        var write = 0;
+        for (var i = 0; i < arr.length; i++) {
+          if (keepFn(arr[i])) {
+            arr[write++] = arr[i];
+          }
+        }
+        arr.length = write;
+      }
+
       function update(dt) {
         if (!state.running) return;
         state.frame += dt;
@@ -6932,7 +6942,7 @@
           });
           }
         }
-        state.trailParticles = state.trailParticles.filter(p => {
+        compactInPlace(state.trailParticles, p => {
           p.x -= state.speed * 1.2 * dt;
           p.life -= dt;
           p.size *= Math.pow(0.96, dt);
