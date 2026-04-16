@@ -22,7 +22,9 @@ export default async (req) => {
   if (text === "/start" && chatId) {
     const token = Netlify.env.get("TELEGRAM_BOT_TOKEN");
 
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    console.log("[DEBUG] TELEGRAM_BOT_TOKEN exists:", !!token);
+
+    const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -33,13 +35,17 @@ export default async (req) => {
             [
               {
                 text: "Play Game 🎮",
-                web_app: { url: "https://www.watermelinafart.com/game" },
+                url: "https://www.watermelinafart.com/game",
               },
             ],
           ],
         },
       }),
     });
+
+    const tgBody = await tgRes.text();
+    console.log("[DEBUG] sendMessage status:", tgRes.status);
+    console.log("[DEBUG] sendMessage response:", tgBody);
   }
 
   return new Response("OK", { status: 200 });
