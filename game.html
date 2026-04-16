@@ -6651,6 +6651,7 @@
                 fc_spent_total: Number(dp.fc_spent_total) || 0,
                 upgrades_bought_total: Number(dp.upgrades_bought_total) || 0
               };
+              await checkAndRefreshDailyMissions();
               // State updated — do NOT render here; checkAndRefreshDailyMissions()
               // will authoritatively fetch and render missions after the run completes
             }
