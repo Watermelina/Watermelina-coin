@@ -211,8 +211,23 @@ function computeUpgradeEffects(userUpgrades) {
   return effects;
 }
 window.computeUpgradeEffects = computeUpgradeEffects;
-
-async function initUser() {
+async function ensureDailyMissionsAssigned(userId) {
+  if (!userId || !window.supabaseClient) return;
+  try {
+    const { error } = await window.supabaseClient.rpc('assign_daily_missions', {
+      p_user_id: userId
+    });
+    if (error) {
+      console.warn('[daily missions] assign failed', error);
+    } else {
+      console.log('[daily missions] assigned');
+    }
+  } catch (err) {
+    console.warn('[daily missions] assign failed', err);
+  }
+}
+window.ensureDailyMissionsAssigned = ensureDailyMissionsAssigned;
+  async function initUser() {
   let userId = localStorage.getItem('wm_user_id');
 
   if (!userId) {
@@ -248,6 +263,7 @@ async function initUser() {
           localStorage.setItem('wm_my_ref_code', existingUser.referral_code);
         }
         userId = existingUser.id;
+        await ensureDailyMissionsAssigned(userId);
         return;
       }
 
