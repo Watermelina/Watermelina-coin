@@ -5832,7 +5832,7 @@
         _dailyResetTimerInterval = setInterval(tick, 1000);
       }
 
-      async function claimDailyMission(dailyMissionId) {
+      async function claimDailyMission(dailyMissionId, missionKey) {
         const userId = localStorage.getItem('wm_user_id');
         if (!userId) return { success: false, error: 'no_user' };
         // Loading protection: prevent duplicate rapid clicks
@@ -5841,17 +5841,17 @@
           return { success: false, error: 'already_claiming' };
         }
         _claimingDailyMissions[dailyMissionId] = true;
-        console.log('[CLAIM-DAILY] Claim start — mission_id:', dailyMissionId, 'user_id:', userId);
+        console.log('[CLAIM-DAILY] Claim start — mission_key:', missionKey, 'user_id:', userId);
         try {
           var result = await window.supabaseClient.rpc('claim_daily_mission', {
             p_user_id: userId,
-            p_mission_id: dailyMissionId
+            p_mission_key: missionKey
           });
           if (result.error) {
-            console.error('[CLAIM-DAILY] Claim failure — mission_id:', dailyMissionId, 'user_id:', userId, 'error:', result.error);
+            console.error('[CLAIM-DAILY] Claim failure — mission_key:', missionKey, 'user_id:', userId, 'error:', result.error);
             return { success: false, error: result.error.message || result.error };
           }
-          console.log('[CLAIM-DAILY] Claim success — mission_id:', dailyMissionId, 'user_id:', userId, 'data:', result.data);
+          console.log('[CLAIM-DAILY] Claim success — mission_key:', missionKey, 'user_id:', userId, 'data:', result.data);
 
           // Refresh profile / FC balance using the existing flow
           await syncProfileToUi();
@@ -5861,7 +5861,7 @@
 
           return { success: true, data: result.data };
         } catch (err) {
-          console.error('[CLAIM-DAILY] Claim failure (exception) — mission_id:', dailyMissionId, 'user_id:', userId, 'error:', err);
+          console.error('[CLAIM-DAILY] Claim failure (exception) — mission_key:', missionKey, 'user_id:', userId, 'error:', err);
           return { success: false, error: err.message };
         } finally {
           delete _claimingDailyMissions[dailyMissionId];
@@ -5926,7 +5926,7 @@
               el.onclick = null;
               // Mark pending so rerenders keep showing "Claiming…"
               if (mission.dailyMissionId) _pendingDailyClaims.add(mission.dailyMissionId);
-              const result = await claimDailyMission(mission.dailyMissionId);
+              const result = await claimDailyMission(mission.dailyMissionId, mission.code);
               // Clear pending guard now that the full claim flow (including refresh) has settled
               if (mission.dailyMissionId) _pendingDailyClaims.delete(mission.dailyMissionId);
               if (result && result.success) {
