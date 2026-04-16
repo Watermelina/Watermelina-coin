@@ -5894,7 +5894,7 @@
           const rewardPoints = mission.rewardFC || mission.reward_points || mission.rewardPoints || 0;
           const rewardWP = mission.rewardWP || 0;
           const rewardText = mission.rewardLabel || ((rewardWP > 0 && rewardPoints > 0) ? ('+' + rewardPoints + ' FC \u2022 <span class="wp-reward-text">+' + rewardWP + ' WP</span>') : rewardWP > 0 ? '<span class="wp-reward-text">+' + rewardWP + ' WP</span>' : ('+' + rewardPoints + ' FC'));
-          const completed = progress >= targetValue;
+          const completed = Boolean(mission.completed);
           const claimed = Boolean(mission.claimed) || Boolean(mission.claimed_at || mission.claimedAt);
           console.log('[MISSIONS] Renderer state — card ' + idx + ':', { title: mission.title, completed: completed, claimed: claimed, progress: progress, targetValue: targetValue });
           const pct = targetValue > 0 ? Math.min((progress / targetValue) * 100, 100) : 0;
@@ -8794,7 +8794,8 @@
                   rewardWP: rwp,
                   rewardLabel: (rfc > 0 && rwp > 0) ? ('+' + rfc + ' FC \u2022 <span class="wp-reward-text">+' + rwp + ' WP</span>') : (rfc > 0 ? ('+' + rfc + ' FC') : ('<span class="wp-reward-text">+' + rwp + ' WP</span>')),
                   claimed: missionClaimed,
-                  claimedAt: m.claimed_at || null
+                  claimedAt: m.claimed_at || null,
+                  completed: m.completed               
                 };
               });
               console.log('[MISSIONS] Fetched claimed values from daily_missions:', missions.map(function(m) { return { id: m.id, claimed: m.claimed, claimed_at: m.claimed_at }; }));
