@@ -230,7 +230,11 @@ window.ensureDailyMissionsAssigned = ensureDailyMissionsAssigned;
   async function initUser() {
   let userId = localStorage.getItem('wm_user_id');
 
-  if (!userId) {
+    if (userId) {
+  await ensureDailyMissionsAssigned(userId);
+  return;
+}  
+    if (!userId) {
     const referralCode = localStorage.getItem('wm_referral_code');
 
     // Check if running inside Telegram and use real user data
