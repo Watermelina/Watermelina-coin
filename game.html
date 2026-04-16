@@ -5834,6 +5834,19 @@
 
       async function claimDailyMission(dailyMissionId) {
         const userId = localStorage.getItem('wm_user_id');
+        try {
+  if (userId && window.supabaseClient) {
+    window.supabaseClient.rpc('assign_daily_missions', {
+      p_user_id: userId
+    }).then(() => {
+      console.log('[daily missions] assignment check complete');
+    }).catch((err) => {
+      console.warn('[daily missions] assignment failed', err);
+    });
+  }
+} catch (err) {
+  console.warn('[daily missions] assignment bootstrap failed', err);
+}  
         if (!userId) return { success: false, error: 'no_user' };
         // Loading protection: prevent duplicate rapid clicks
         if (_claimingDailyMissions[dailyMissionId]) {
