@@ -8703,7 +8703,7 @@
           // Fetch both daily_missions and daily_mission_progress in parallel
           var missionsPromise = fetch(
             SUPABASE_URL + '/rest/v1/daily_missions?user_id=eq.' + encodeURIComponent(userId) +
-            '&cycle_date=eq.' + today + '&order=category',
+            '&cycle_date=eq.' + today + '&select=*,missions(*)&order=category',
             { headers: headers }
           );
           var progressPromise = fetch(
@@ -8780,16 +8780,15 @@
               var mappedProgressValues = {};
               state.missions = deduped.map(function(m) {
                 var tv = m.target_value != null ? Number(m.target_value) : 0;
-                var rfc = m.reward_fc != null ? Number(m.reward_fc) : 0;
-                var rwp = m.reward_wp != null ? Number(m.reward_wp) : 0;
+                var rfc = m.missions && m.missions.reward_fc != null ? Number(m.missions.reward_fc) : 0;
+                var rwp = m.missions && m.missions.reward_wp != null ? Number(m.missions.reward_wp) : 0;                
                 var currentProgress = getProgressForMission(m.mission_type);
                 mappedProgressValues[m.mission_type] = currentProgress;
                 var missionClaimed = Boolean(m.claimed) || Boolean(m.claimed_at);
                 return {
                   code: m.mission_key || m.code || m.id,
                   dailyMissionId: m.id,
-                  title: missionTitle(m.mission_type, m.target_value, m.category),
-                  progress: currentProgress,
+                  title: (m.missions && m.missions.title) ? m.missions.title : missionTitle(m.mission_type, m.target_value, m.category),                  progress: currentProgress,
                   targetValue: tv,
                   rewardFC: rfc,
                   rewardWP: rwp,
