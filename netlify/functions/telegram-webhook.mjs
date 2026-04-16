@@ -4,11 +4,17 @@ export default async (req) => {
   }
 
   let update;
+  let rawBody;
   try {
-    update = await req.json();
+    rawBody = await req.text();
+    update = JSON.parse(rawBody);
   } catch {
     return new Response("OK", { status: 200 });
   }
+
+  // TEMPORARY DEBUG LOGGING — remove after investigation
+  console.log("[DEBUG] Raw request body:", rawBody);
+  console.log("[DEBUG] update.message.text:", update?.message?.text);
 
   const text = update?.message?.text;
   const chatId = update?.message?.chat?.id;
