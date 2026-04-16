@@ -8763,9 +8763,21 @@
                 }
               }
 
+              // Deduplicate: group rows by mission_key, prefer completed row, else latest by id
+              var grouped = {};
+              missions.forEach(function(m) {
+                var key = m.mission_key || m.code || m.id;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(m);
+              });
+              var deduped = Object.values(grouped).map(function(group) {
+                return group.find(function(r) { return Boolean(r.claimed) || Boolean(r.claimed_at); })
+                    || group.sort(function(a, b) { return String(b.id).localeCompare(String(a.id)); })[0];
+              });
+
               // Map to format renderMissionCards expects, using progress from daily_mission_progress
               var mappedProgressValues = {};
-              state.missions = missions.map(function(m) {
+              state.missions = deduped.map(function(m) {
                 var tv = m.target_value != null ? Number(m.target_value) : 0;
                 var rfc = m.reward_fc != null ? Number(m.reward_fc) : 0;
                 var rwp = m.reward_wp != null ? Number(m.reward_wp) : 0;
