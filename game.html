@@ -8780,8 +8780,8 @@
               var mappedProgressValues = {};
               state.missions = deduped.map(function(m) {
                 var tv = m.target_value != null ? Number(m.target_value) : 0;
-                var rfc = m.missions && m.missions.reward_fc != null ? Number(m.missions.reward_fc) : 0;
-                var rwp = m.missions && m.missions.reward_wp != null ? Number(m.missions.reward_wp) : 0;                
+                var rfc = m.missions && m.missions.points_reward != null ? Number(m.missions.points_reward) : 0;
+                var rwp = m.missions && m.missions.wp_reward != null ? Number(m.missions.wp_reward) : 0;
                 var currentProgress = getProgressForMission(m.mission_type);
                 mappedProgressValues[m.mission_type] = currentProgress;
                 var missionClaimed = Boolean(m.claimed) || Boolean(m.claimed_at);
