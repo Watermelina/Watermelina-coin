@@ -30,16 +30,6 @@ export default async (req) => {
       body: JSON.stringify({
         chat_id: chatId,
         text: "Welcome to Watermelina 🍉💨\nTap below to play and start earning rewards.",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "Play Game 🎮",
-                url: "https://www.watermelinafart.com/game",
-              },
-            ],
-          ],
-        },
       }),
     });
 
