@@ -24,12 +24,32 @@ export default async (req) => {
   }
 
   const url = new URL(req.url);
-  const userId = url.searchParams.get('user_id');
+  let userId = url.searchParams.get('user_id');
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Missing user_id' }), { status: 400, headers: HEADERS });
   }
 
   try {
+    if (userId.startsWith('tg_')) {
+      const telegram_id = userId.slice(3);
+      const { data: tgUser, error: tgErr } = await supabase
+        .from('users')
+        .select('id')
+        .eq('telegram_id', telegram_id)
+        .maybeSingle();
+
+      if (tgErr) {
+        console.error('[GET-AIRDROP-RANK] telegram_id lookup failed:', tgErr.message);
+        return new Response(JSON.stringify({ error: 'Score lookup failed' }), { status: 500, headers: HEADERS });
+      }
+
+      if (!tgUser) {
+        return new Response(JSON.stringify({ rank: null, total: null, percentile: null }), { status: 200, headers: HEADERS });
+      }
+
+      userId = tgUser.id;
+    }
+
     // Get current user's WP from the users table
     const { data: userRow, error: userErr } = await supabase
       .from('airdrop_scores')
