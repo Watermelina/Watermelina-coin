@@ -71,7 +71,7 @@ export default async (req) => {
     // Count users with a higher WP (those ranked above)
     const { count: higherCount, error: higherErr } = await supabase
       .from('airdrop_scores')
-      .select('user_id', { count: 'exact', head: true })
+      .select('user_id', { count: 'planned', head: true })
       .gt('final_airdrop_score', userScore);
 
     if (higherErr) {
@@ -82,7 +82,7 @@ export default async (req) => {
     // Count total users
     const { count: totalCount, error: totalErr } = await supabase
       .from('airdrop_scores')
-      .select('user_id', { count: 'exact', head: true });
+      .select('user_id', { count: 'planned', head: true });
 
     if (totalErr) {
       console.error('[GET-AIRDROP-RANK] Total count failed:', totalErr.message);
