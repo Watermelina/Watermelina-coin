@@ -5896,6 +5896,9 @@
           const rewardText = mission.rewardLabel || ((rewardWP > 0 && rewardPoints > 0) ? ('+' + rewardPoints + ' FC \u2022 <span class="wp-reward-text">+' + rewardWP + ' WP</span>') : rewardWP > 0 ? '<span class="wp-reward-text">+' + rewardWP + ' WP</span>' : ('+' + rewardPoints + ' FC'));
           const completed = Boolean(mission.completed);
           const claimed = Boolean(mission.claimed) || Boolean(mission.claimed_at || mission.claimedAt);
+          const showClaimButton = mission.completed && !claimed;
+          // Force claim button to show if completed but not yet claimed
+          const showClaimButton = mission.completed && !claimed;
           console.log('[MISSIONS] Renderer state — card ' + idx + ':', { title: mission.title, completed: completed, claimed: claimed, progress: progress, targetValue: targetValue });
           const pct = targetValue > 0 ? Math.min((progress / targetValue) * 100, 100) : 0;
           const icon = getMissionIcon(mission);
