@@ -339,9 +339,22 @@ window.ensureDailyMissionsAssigned = ensureDailyMissionsAssigned;
 // Capture Telegram start_param as referral code before user init
 (function captureTelegramReferral() {
   try {
-    const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
-    if (startParam && !localStorage.getItem('wm_referral_code')) {
-      localStorage.setItem('wm_referral_code', startParam);
+    if (localStorage.getItem('wm_referral_code')) return;
+
+    let startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || null;
+
+    if (!startParam && typeof window.location?.hash === 'string') {
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      startParam = hashParams.get('tgWebAppStartParam') || null;
+    }
+
+    if (!startParam) {
+      const qs = new URLSearchParams(window.location.search);
+      startParam = qs.get('startapp') || qs.get('tgWebAppStartParam') || null;
+    }
+
+    if (startParam) {
+      localStorage.setItem('wm_referral_code', String(startParam).trim());
     }
   } catch (e) { /* ignore */ }
 })();
