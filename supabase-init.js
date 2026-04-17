@@ -212,7 +212,6 @@ function computeUpgradeEffects(userUpgrades) {
 }
 window.computeUpgradeEffects = computeUpgradeEffects;
 async function ensureDailyMissionsAssigned(userId) {
-  alert('ASSIGN CALLED: ' + userId);
   if (!userId || !window.supabaseClient) return;
   try {
     const { error } = await window.supabaseClient.rpc('assign_daily_missions', {
