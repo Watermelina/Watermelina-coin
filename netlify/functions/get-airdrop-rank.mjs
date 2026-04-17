@@ -30,7 +30,7 @@ export default async (req) => {
   }
 
   try {
-    // Get current user's score from the airdrop_scores view (all users, not just eligible)
+    // Get current user's WP from the users table
     const { data: userRow, error: userErr } = await supabase
       .from('airdrop_scores')
       .select('final_airdrop_score')
@@ -48,7 +48,7 @@ export default async (req) => {
 
     const userScore = userRow.final_airdrop_score;
 
-    // Count users with a higher score (those ranked above)
+    // Count users with a higher WP (those ranked above)
     const { count: higherCount, error: higherErr } = await supabase
       .from('airdrop_scores')
       .select('user_id', { count: 'exact', head: true })
@@ -59,7 +59,7 @@ export default async (req) => {
       return new Response(JSON.stringify({ error: 'Rank calculation failed' }), { status: 500, headers: HEADERS });
     }
 
-    // Count total users in airdrop_scores
+    // Count total users
     const { count: totalCount, error: totalErr } = await supabase
       .from('airdrop_scores')
       .select('user_id', { count: 'exact', head: true });
