@@ -50,12 +50,20 @@ export default async (req) => {
       userId = tgUser.id;
     }
 
-    // Get current user's WP from the users table
-    const { data: userRow, error: userErr } = await supabase
-      .from('airdrop_scores')
-      .select('final_airdrop_score')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Fetch current user's score and total user count in parallel — they don't depend on each other
+    const [userRowResult, totalCountResult] = await Promise.all([
+      supabase
+        .from('airdrop_scores')
+        .select('final_airdrop_score')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      supabase
+        .from('airdrop_scores')
+        .select('user_id', { count: 'planned', head: true }),
+    ]);
+
+    const { data: userRow, error: userErr } = userRowResult;
+    const { count: totalCount, error: totalErr } = totalCountResult;
 
     if (userErr) {
       console.error('[GET-AIRDROP-RANK] User score lookup failed:', userErr.message);
@@ -66,9 +74,14 @@ export default async (req) => {
       return new Response(JSON.stringify({ rank: null, total: null, percentile: null }), { status: 200, headers: HEADERS });
     }
 
+    if (totalErr) {
+      console.error('[GET-AIRDROP-RANK] Total count failed:', totalErr.message);
+      return new Response(JSON.stringify({ error: 'Total count failed' }), { status: 500, headers: HEADERS });
+    }
+
     const userScore = userRow.final_airdrop_score;
 
-    // Count users with a higher WP (those ranked above)
+    // Count users with a higher WP (those ranked above) — depends on userScore, so runs after
     const { count: higherCount, error: higherErr } = await supabase
       .from('airdrop_scores')
       .select('user_id', { count: 'planned', head: true })
@@ -77,16 +90,6 @@ export default async (req) => {
     if (higherErr) {
       console.error('[GET-AIRDROP-RANK] Higher count failed:', higherErr.message);
       return new Response(JSON.stringify({ error: 'Rank calculation failed' }), { status: 500, headers: HEADERS });
-    }
-
-    // Count total users
-    const { count: totalCount, error: totalErr } = await supabase
-      .from('airdrop_scores')
-      .select('user_id', { count: 'planned', head: true });
-
-    if (totalErr) {
-      console.error('[GET-AIRDROP-RANK] Total count failed:', totalErr.message);
-      return new Response(JSON.stringify({ error: 'Total count failed' }), { status: 500, headers: HEADERS });
     }
 
     const rank = higherCount + 1;
