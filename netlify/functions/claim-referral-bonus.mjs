@@ -80,17 +80,23 @@ export default async (req) => {
 
     const referredIds = referrals.map(r => r.referred_user_id);
 
-    // 2. Get WP for referred users
-    const { data: users, error: usersErr } = await supabase
-      .from('users')
-      .select('id, watermelon_points')
-      .in('id', referredIds);
+    // 2. Get cumulative earned WP per referred user from point_events
+    const { data: earnEvents, error: earnErr } = await supabase
+      .from('point_events')
+      .select('user_id, points')
+      .in('user_id', referredIds)
+      .eq('event_type', 'watermelon_point_earn');
 
-    if (usersErr) {
-      console.error('[CLAIM-REFERRAL-BONUS] users query failed:', usersErr.message);
-      return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
+    if (earnErr) {
+      console.error('[CLAIM-REFERRAL-BONUS] earn events query failed:', earnErr.message);
+      return new Response(JSON.stringify({ error: 'Failed to fetch earned points' }), {
         status: 500, headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    const earnedByUser = {};
+    for (const ev of (earnEvents || [])) {
+      earnedByUser[ev.user_id] = (earnedByUser[ev.user_id] || 0) + (Number(ev.points) || 0);
     }
 
     // 2b. Get run counts for referred users to check active status
@@ -134,20 +140,20 @@ export default async (req) => {
     let totalToClaim = 0;
     const claimDetails = [];
 
-    for (const u of (users || [])) {
-      const userRunCount = runCountByUser[u.id] || 0;
+    for (const referredId of referredIds) {
+      const userRunCount = runCountByUser[referredId] || 0;
       if (userRunCount < ACTIVE_RUN_THRESHOLD) {
         continue; // skip inactive referrals
       }
 
-      const wp = Number(u.watermelon_points) || 0;
+      const wp = earnedByUser[referredId] || 0;
       const totalBonus = Math.floor(wp * BONUS_RATE);
-      const alreadyClaimed = claimedByReferred[u.id] || 0;
+      const alreadyClaimed = claimedByReferred[referredId] || 0;
       const claimable = Math.max(0, totalBonus - alreadyClaimed);
 
       if (claimable > 0) {
         totalToClaim += claimable;
-        claimDetails.push({ referred_user_id: u.id, amount: claimable, run_count: userRunCount });
+        claimDetails.push({ referred_user_id: referredId, amount: claimable, run_count: userRunCount });
       }
     }
 
