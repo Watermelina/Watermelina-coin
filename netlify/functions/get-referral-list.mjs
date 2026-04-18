@@ -56,11 +56,28 @@ export default async (req) => {
 
     const referredIds = referrals.map(r => r.referred_user_id);
 
-    // 2. Get user info for all referred users
-    const { data: users, error: usersErr } = await supabase
-      .from('users')
-      .select('id, username, first_name')
-      .in('id', referredIds);
+    // 2, 2b, 3 — these three queries are independent; run them in parallel
+    // to cut total wait from sum-of-latencies to max-of-latencies.
+    const [usersRes, earnEventsRes, claimedEventsRes] = await Promise.all([
+      supabase
+        .from('users')
+        .select('id, username, first_name')
+        .in('id', referredIds),
+      supabase
+        .from('point_events')
+        .select('user_id, points')
+        .in('user_id', referredIds)
+        .eq('event_type', 'watermelon_point_earn'),
+      supabase
+        .from('point_events')
+        .select('points, metadata')
+        .eq('user_id', userId)
+        .eq('event_type', 'referral_bonus_claim'),
+    ]);
+
+    const { data: users, error: usersErr } = usersRes;
+    const { data: earnEvents, error: earnErr } = earnEventsRes;
+    const { data: claimedEvents, error: claimedErr } = claimedEventsRes;
 
     if (usersErr) {
       console.error('[GET-REFERRAL-LIST] users query failed:', usersErr.message);
@@ -71,13 +88,6 @@ export default async (req) => {
       userMap[u.id] = u;
     }
 
-    // 2b. Get cumulative earned WP per referred user from point_events
-    const { data: earnEvents, error: earnErr } = await supabase
-      .from('point_events')
-      .select('user_id, points')
-      .in('user_id', referredIds)
-      .eq('event_type', 'watermelon_point_earn');
-
     if (earnErr) {
       console.error('[GET-REFERRAL-LIST] earn events query failed:', earnErr.message);
     }
@@ -86,13 +96,6 @@ export default async (req) => {
     for (const ev of (earnEvents || [])) {
       earnedByUser[ev.user_id] = (earnedByUser[ev.user_id] || 0) + (Number(ev.points) || 0);
     }
-
-    // 3. Get total referral_bonus_claim events (claimed bonuses)
-    const { data: claimedEvents, error: claimedErr } = await supabase
-      .from('point_events')
-      .select('points, metadata')
-      .eq('user_id', userId)
-      .eq('event_type', 'referral_bonus_claim');
 
     if (claimedErr) {
       console.error('[GET-REFERRAL-LIST] claimed events query failed:', claimedErr.message);
