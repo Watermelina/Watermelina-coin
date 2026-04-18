@@ -56,10 +56,10 @@ export default async (req) => {
 
     const referredIds = referrals.map(r => r.referred_user_id);
 
-    // 2. Get user info + WP for all referred users
+    // 2. Get user info for all referred users
     const { data: users, error: usersErr } = await supabase
       .from('users')
-      .select('id, username, first_name, watermelon_points')
+      .select('id, username, first_name')
       .in('id', referredIds);
 
     if (usersErr) {
@@ -69,6 +69,22 @@ export default async (req) => {
     const userMap = {};
     for (const u of (users || [])) {
       userMap[u.id] = u;
+    }
+
+    // 2b. Get cumulative earned WP per referred user from point_events
+    const { data: earnEvents, error: earnErr } = await supabase
+      .from('point_events')
+      .select('user_id, points')
+      .in('user_id', referredIds)
+      .eq('event_type', 'watermelon_point_earn');
+
+    if (earnErr) {
+      console.error('[GET-REFERRAL-LIST] earn events query failed:', earnErr.message);
+    }
+
+    const earnedByUser = {};
+    for (const ev of (earnEvents || [])) {
+      earnedByUser[ev.user_id] = (earnedByUser[ev.user_id] || 0) + (Number(ev.points) || 0);
     }
 
     // 3. Get total referral_bonus_claim events (claimed bonuses)
@@ -100,7 +116,7 @@ export default async (req) => {
 
     const referralList = referrals.map(ref => {
       const u = userMap[ref.referred_user_id] || {};
-      const wp = Number(u.watermelon_points) || 0;
+      const wp = earnedByUser[ref.referred_user_id] || 0;
       const bonusEarned = Math.floor(wp * BONUS_RATE);
       const claimed = claimedByReferred[ref.referred_user_id] || 0;
       const claimable = Math.max(0, bonusEarned - claimed);
