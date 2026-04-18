@@ -14755,7 +14755,35 @@ var STARTUP_TRACE = false;
 
   var _airdropRankCache = null;
   var _airdropRankCacheTime = 0;
+  var _airdropRankInFlight = null;
+  var _airdropRankHydrated = false;
   var RANK_CACHE_TTL = 60000; // 60 seconds
+  var RANK_LS_KEY = 'wm_airdrop_rank_cache';
+
+  function _hydrateRankCacheFromLS() {
+    if (_airdropRankHydrated) return;
+    _airdropRankHydrated = true;
+    try {
+      var raw = localStorage.getItem(RANK_LS_KEY);
+      if (!raw) return;
+      var parsed = JSON.parse(raw);
+      var userId = localStorage.getItem('wm_user_id');
+      if (!parsed || !parsed.data || parsed.user_id !== userId) return;
+      _airdropRankCache = parsed.data;
+      _airdropRankCacheTime = Number(parsed.t) || 0;
+    } catch (e) {}
+  }
+
+  function _persistRankCacheToLS(data) {
+    try {
+      var userId = localStorage.getItem('wm_user_id');
+      localStorage.setItem(RANK_LS_KEY, JSON.stringify({
+        user_id: userId,
+        t: Date.now(),
+        data: data
+      }));
+    } catch (e) {}
+  }
 
   function fetchAirdropRank() {
     var userId = localStorage.getItem('wm_user_id');
@@ -14764,28 +14792,43 @@ var STARTUP_TRACE = false;
     var rankPosEl = document.getElementById('airdropRankPosition');
     var rankSubEl = document.getElementById('airdropRankSub');
 
-    // Use cached result if fresh enough
+    // Hydrate from localStorage on first use so cached rank survives reloads
+    _hydrateRankCacheFromLS();
+
     var now = Date.now();
-    if (_airdropRankCache && (now - _airdropRankCacheTime) < RANK_CACHE_TTL) {
+    var hasCache = !!_airdropRankCache;
+    var isFresh = hasCache && (now - _airdropRankCacheTime) < RANK_CACHE_TTL;
+
+    // Instantly paint any cached value (even stale) to avoid the loading flicker
+    if (hasCache) {
       applyRankData(_airdropRankCache, rankPosEl, rankSubEl);
-      return;
+      if (isFresh) return;
+    } else {
+      // Only show loading state if we have nothing to paint
+      if (rankPosEl) rankPosEl.textContent = '⏳';
+      if (rankSubEl) rankSubEl.textContent = 'Loading rank…';
     }
 
-    // Show loading state briefly
-    if (rankPosEl) rankPosEl.textContent = '⏳';
-    if (rankSubEl) rankSubEl.textContent = 'Loading rank…';
+    // Dedupe concurrent refreshes (e.g. rapid tab switches)
+    if (_airdropRankInFlight) return;
 
-    fetch('/.netlify/functions/get-airdrop-rank?user_id=' + encodeURIComponent(userId))
+    _airdropRankInFlight = fetch('/.netlify/functions/get-airdrop-rank?user_id=' + encodeURIComponent(userId))
       .then(function(res) { return res.json(); })
       .then(function(data) {
         _airdropRankCache = data;
         _airdropRankCacheTime = Date.now();
+        _persistRankCacheToLS(data);
         applyRankData(data, rankPosEl, rankSubEl);
       })
       .catch(function() {
-        // Fallback — don't break UI
-        if (rankPosEl) rankPosEl.textContent = '🏅';
-        if (rankSubEl) rankSubEl.textContent = 'Keep growing to climb higher 🍉';
+        // Only show fallback if we didn't already paint a cached value
+        if (!hasCache) {
+          if (rankPosEl) rankPosEl.textContent = '🏅';
+          if (rankSubEl) rankSubEl.textContent = 'Keep growing to climb higher 🍉';
+        }
+      })
+      .then(function() {
+        _airdropRankInFlight = null;
       });
   }
 
