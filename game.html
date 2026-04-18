@@ -8356,24 +8356,84 @@
 
       // === Referral List Dashboard ===
       var _referralListData = null;
+      var _referralListCacheTime = 0;
+      var _referralListInFlight = null;
+      var _referralListHydrated = false;
+      var REFERRAL_LIST_TTL = 60000; // 60s — same pattern as airdrop rank cache
+      var REFERRAL_LIST_LS_KEY = 'wm_referral_list_cache';
 
-      async function loadReferralList() {
+      function _hydrateReferralListFromLS() {
+        if (_referralListHydrated) return;
+        _referralListHydrated = true;
+        try {
+          var raw = localStorage.getItem(REFERRAL_LIST_LS_KEY);
+          if (!raw) return;
+          var parsed = JSON.parse(raw);
+          var userId = localStorage.getItem('wm_user_id');
+          if (!parsed || !parsed.data || parsed.user_id !== userId) return;
+          _referralListData = parsed.data;
+          _referralListCacheTime = Number(parsed.t) || 0;
+        } catch (e) {}
+      }
+
+      function _persistReferralListToLS(data) {
+        try {
+          var userId = localStorage.getItem('wm_user_id');
+          localStorage.setItem(REFERRAL_LIST_LS_KEY, JSON.stringify({
+            user_id: userId,
+            t: Date.now(),
+            data: data
+          }));
+        } catch (e) {}
+      }
+
+      async function loadReferralList(options) {
+        var force = !!(options && options.force);
         try {
           const userId = localStorage.getItem('wm_user_id');
           if (!userId) return;
 
-          const resp = await fetch('/api/get-referral-list?user_id=' + encodeURIComponent(userId));
-          if (!resp.ok) {
-            console.error('[REFERRAL-LIST] fetch failed:', resp.status);
-            return;
+          // Hydrate once so cached data survives reloads
+          _hydrateReferralListFromLS();
+
+          var now = Date.now();
+          var hasCache = !!_referralListData;
+          var isFresh = hasCache && (now - _referralListCacheTime) < REFERRAL_LIST_TTL;
+
+          // Paint any cached value instantly (stale-while-revalidate) to avoid
+          // the "Loading referrals…" flicker on tab switches.
+          if (hasCache) {
+            renderReferralDashboard(_referralListData);
+            if (isFresh && !force) return;
           }
-          const data = await resp.json();
-          _referralListData = data;
-          renderReferralDashboard(data);
+
+          // Dedupe concurrent fetches (rapid tab switches, claim+revisit, etc.)
+          if (_referralListInFlight) return _referralListInFlight;
+
+          _referralListInFlight = (async () => {
+            try {
+              const resp = await fetch('/api/get-referral-list?user_id=' + encodeURIComponent(userId));
+              if (!resp.ok) {
+                console.error('[REFERRAL-LIST] fetch failed:', resp.status);
+                return;
+              }
+              const data = await resp.json();
+              _referralListData = data;
+              _referralListCacheTime = Date.now();
+              _persistReferralListToLS(data);
+              renderReferralDashboard(data);
+            } finally {
+              _referralListInFlight = null;
+            }
+          })();
+          return _referralListInFlight;
         } catch (err) {
           console.error('[REFERRAL-LIST] loadReferralList error:', err);
-          var emptyEl = document.getElementById('referralListEmpty');
-          if (emptyEl) emptyEl.innerHTML = '<span style="font-size:24px;display:block;margin-bottom:8px;">⚠️</span>Could not load referrals';
+          // Only show the error state if we have nothing cached to paint
+          if (!_referralListData) {
+            var emptyEl = document.getElementById('referralListEmpty');
+            if (emptyEl) emptyEl.innerHTML = '<span style="font-size:24px;display:block;margin-bottom:8px;">⚠️</span>Could not load referrals';
+          }
         }
       }
 
@@ -8492,7 +8552,7 @@
           if (result.success && result.claimed > 0) {
             showToast('Claimed ' + Number(result.claimed).toLocaleString() + ' WP!', 'success');
             if (window.haptic) window.haptic('chest');
-            await loadReferralList();
+            await loadReferralList({ force: true });
           } else {
             btn.textContent = 'Claim';
             btn.disabled = false;
@@ -8524,7 +8584,7 @@
           if (result.success && result.claimed > 0) {
             showToast('Claimed ' + Number(result.claimed).toLocaleString() + ' WP!', 'success');
             if (window.haptic) window.haptic('chest');
-            await loadReferralList();
+            await loadReferralList({ force: true });
           } else {
             btn.textContent = 'Claim All';
             btn.disabled = true;
