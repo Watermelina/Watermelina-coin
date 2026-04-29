@@ -38,31 +38,69 @@ export default async (req) => {
   const userId = url.searchParams.get('user_id');
 
   try {
-    // Top 10 players by best single-run score (excludes suspicious runs)
-    const { data: top10, error: top10Err } = await supabase.rpc('get_best_score_leaderboard');
+    // Top 10 players by best single-run score (excludes suspicious runs).
+    // Computed inline from the runs table to avoid dependency on a database
+    // RPC that may not be present in every environment.
+    const { data: runs, error: runsErr } = await supabase
+      .from('runs')
+      .select('user_id, score')
+      .eq('suspicious', false);
 
-    if (top10Err) {
-      console.error('[GET-LEADERBOARD] RPC get_best_score_leaderboard failed:', top10Err.message);
-      return new Response(JSON.stringify({ error: 'Leaderboard RPC failed. Ensure the get_best_score_leaderboard() database function exists.' }), {
+    if (runsErr) {
+      console.error('[GET-LEADERBOARD] runs query failed:', runsErr.message);
+      return new Response(JSON.stringify({ error: 'Leaderboard query failed.' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
+    const bestByUser = {};
+    for (const r of (runs || [])) {
+      const uid = r.user_id;
+      const score = Number(r.score) || 0;
+      if (!bestByUser[uid] || score > bestByUser[uid]) {
+        bestByUser[uid] = score;
+      }
+    }
+
+    const rankedIds = Object.keys(bestByUser).sort(
+      (a, b) => bestByUser[b] - bestByUser[a]
+    );
+    const topIds = rankedIds.slice(0, 10);
+
+    let userMap = {};
+    if (topIds.length > 0) {
+      const { data: users, error: usersErr } = await supabase
+        .from('users')
+        .select('id, username, first_name')
+        .in('id', topIds);
+      if (usersErr) {
+        console.error('[GET-LEADERBOARD] users query failed:', usersErr.message);
+      } else {
+        for (const u of (users || [])) userMap[u.id] = u;
+      }
+    }
+
+    const top10 = topIds.map(id => ({
+      user_id: id,
+      best_score: bestByUser[id],
+      username: userMap[id]?.username || null,
+      first_name: userMap[id]?.first_name || null,
+    }));
+
     let result = { top10 };
 
-    // If user_id provided and not in top 10, calculate their rank
+    // If user_id provided and not in top 10, derive their rank from the same data
     if (userId) {
       const userInTop = top10.some(row => row.user_id === userId);
-      if (!userInTop) {
-        const { data: userRank, error: rankErr } = await supabase.rpc('get_user_best_score_rank', {
-          p_user_id: userId,
-        });
-        if (rankErr) {
-          console.error('[GET-LEADERBOARD] RPC get_user_best_score_rank failed:', rankErr.message);
-        } else if (userRank) {
-          result.user_rank = userRank;
+      if (!userInTop && bestByUser[userId] != null) {
+        const myBest = bestByUser[userId];
+        let higher = 0;
+        for (const uid of rankedIds) {
+          if (bestByUser[uid] > myBest) higher++;
+          else break;
         }
+        result.user_rank = { rank: higher + 1, best_score: myBest };
       }
     }
 
