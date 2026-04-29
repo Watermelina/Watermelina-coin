@@ -50,16 +50,19 @@ export default async (req) => {
       userId = tgUser.id;
     }
 
-    // Fetch current user's score and total user count in parallel — they don't depend on each other
+    // Fetch current user's WP and total user count in parallel — they don't depend on each other.
+    // WP is stored on users.watermelon_points (the airdrop_scores table referenced previously
+    // does not exist in this project, so the lookup always returned null and the UI fell back
+    // to "Keep growing to climb higher 🍉").
     const [userRowResult, totalCountResult] = await Promise.all([
       supabase
-        .from('airdrop_scores')
-        .select('final_airdrop_score')
-        .eq('user_id', userId)
+        .from('users')
+        .select('id, watermelon_points')
+        .eq('id', userId)
         .maybeSingle(),
       supabase
-        .from('airdrop_scores')
-        .select('user_id', { count: 'planned', head: true }),
+        .from('users')
+        .select('id', { count: 'planned', head: true }),
     ]);
 
     const { data: userRow, error: userErr } = userRowResult;
@@ -79,13 +82,13 @@ export default async (req) => {
       return new Response(JSON.stringify({ error: 'Total count failed' }), { status: 500, headers: HEADERS });
     }
 
-    const userScore = userRow.final_airdrop_score;
+    const userScore = Number(userRow.watermelon_points) || 0;
 
     // Count users with a higher WP (those ranked above) — depends on userScore, so runs after
     const { count: higherCount, error: higherErr } = await supabase
-      .from('airdrop_scores')
-      .select('user_id', { count: 'planned', head: true })
-      .gt('final_airdrop_score', userScore);
+      .from('users')
+      .select('id', { count: 'planned', head: true })
+      .gt('watermelon_points', userScore);
 
     if (higherErr) {
       console.error('[GET-AIRDROP-RANK] Higher count failed:', higherErr.message);
