@@ -38,13 +38,21 @@ export default async (req) => {
   const userId = url.searchParams.get('user_id');
 
   try {
-    // Top 10 players by best single-run score (excludes suspicious runs).
-    // Computed inline from the runs table to avoid dependency on a database
-    // RPC that may not be present in every environment.
-    const { data: runs, error: runsErr } = await supabase
+    // Top-score-first: fetch one bounded window of the highest-scoring
+    // non-suspicious runs and walk it to collect the first 10 unique
+    // user_ids. Because rows are ordered by score DESC, the first time
+    // we see a user_id is that user's MAX(score). The previous full-
+    // table pagination loop hit Supabase/Netlify timeouts on a large
+    // runs table, which surfaced as "Error loading leaderboard".
+    const FETCH_LIMIT = 2000;
+    const { data: topRuns, error: runsErr } = await supabase
       .from('runs')
       .select('user_id, score')
-      .eq('suspicious', false);
+      .eq('suspicious', false)
+      .not('score', 'is', null)
+      .not('user_id', 'is', null)
+      .order('score', { ascending: false })
+      .range(0, FETCH_LIMIT - 1);
 
     if (runsErr) {
       console.error('[GET-LEADERBOARD] runs query failed:', runsErr.message);
@@ -55,17 +63,15 @@ export default async (req) => {
     }
 
     const bestByUser = {};
-    for (const r of (runs || [])) {
+    const rankedIds = [];
+    for (const r of (topRuns || [])) {
       const uid = r.user_id;
-      const score = Number(r.score) || 0;
-      if (!bestByUser[uid] || score > bestByUser[uid]) {
-        bestByUser[uid] = score;
+      if (uid == null) continue;
+      if (bestByUser[uid] == null) {
+        bestByUser[uid] = Number(r.score) || 0;
+        rankedIds.push(uid);
       }
     }
-
-    const rankedIds = Object.keys(bestByUser).sort(
-      (a, b) => bestByUser[b] - bestByUser[a]
-    );
     const topIds = rankedIds.slice(0, 10);
 
     let userMap = {};
@@ -90,7 +96,8 @@ export default async (req) => {
 
     let result = { top10 };
 
-    // If user_id provided and not in top 10, derive their rank from the same data
+    // If user_id provided and not in top 10, derive their rank from
+    // the same in-memory map so the rank reflects the full dataset.
     if (userId) {
       const userInTop = top10.some(row => row.user_id === userId);
       if (!userInTop && bestByUser[userId] != null) {
